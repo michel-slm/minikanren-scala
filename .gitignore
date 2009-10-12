@@ -1,0 +1,8 @@
+.classpath
+.manager
+.project
+.scala_dependencies
+bin
+*.class
+*~
+*\#*\#
