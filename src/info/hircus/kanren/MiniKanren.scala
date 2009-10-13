@@ -1,3 +1,34 @@
+/*
+ * Copyright (c) 2009 Michel Alexandre Salim.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ * 3. The names of the authors may not be used to endorse or promote
+ *    products derived from this software without specific, prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 package info.hircus.kanren
 
 object MiniKanren {
@@ -132,5 +163,99 @@ object MiniKanren {
     }
     else if (t1 == t2) return Some(s)
     else return None
+  }
+  
+  /* Logic system */
+
+  /* (define bind
+   *   (lambda (a-inf g)
+   *     (case-inf a-inf
+   *       (mzero)
+   *       ((a) (g a))
+   *       ((a f) (mplus (g a)
+   *                (lambdaf@ () (bind (f) g)))))))
+   */
+  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
+    a_inf flatMap g
+
+  /* (define mplus
+   *   (lambda (a-inf f)
+   *     (case-inf a-inf
+   *       (f)
+   *       ((a) (choice a f))
+   *       ((a f0) (choice a
+   *                 (lambdaf@ () (mplus (f0) f)))))))
+   */
+  def mplus(a_inf: Stream[Subst],
+	    f: => Stream[Subst]): Stream[Subst] =
+    a_inf append f
+
+
+  /* (define-syntax anye
+    *   (syntax-rules ()
+    *     ((_ g1 g2)
+    *      (lambdag@ (s)
+    *        (mplus (g1 s)
+    *          (lambdaf@ () (g2 s)))))))
+    */
+  def any_e(g1: Goal, g2: Goal): Goal = { s: Subst =>
+    mplus(g1(s), g2(s)) }
+
+  /* (define-syntax all
+   *   (syntax-rules ()
+   *     ((_) succeed)
+   *     ((_ g) (lambdag@ (s) (g s)))
+   *     ((_ g^ g ...) (lambdag@ (s) (bind (g^ s) (all g ...))))))
+   */
+  def all(gs: Goal*): Goal = {
+    gs.toList match {
+      case Nil => succeed
+      case g :: Nil => g
+      case g :: gs2 =>
+	{ s: Subst => bind(g(s), all(gs2: _*)) }
+    }
+  }
+
+  /* (define-syntax ife
+   *   (syntax-rules ()
+   *     ((_ g0 g1 g2)
+   *      (lambdag@ (s)
+   *        (mplus ((all g0 g1) s)
+   *               (lambdaf@ () (g2 s)))))))
+   */
+
+  /**
+   * While we could use call-by-name here,
+   * since the goals are functions anyway, delaying evaluation is
+   * unnecessary
+   */
+  def if_e(g0: Goal, g1: Goal, g2: Goal): Goal = {
+    s: Subst =>
+      mplus(all(g0, g1)(s),
+	    g2(s))
+  }
+
+  def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
+    unify(t1, t2, s) match {
+      case Some(s2) => succeed(s2)
+      case None => fail(empty_s) // does not matter which substitution
+    } }
+
+  /* (define-syntax run
+   *   (syntax-rules ()
+   *     ((_ n^ (x) g ...)
+   *      (let ((n n^) (x (var 'x)))
+   *        (if (or (not n) (> n 0))
+   *          (map-inf n
+   *            (lambda (s) (reify (walk* x s)))
+   *            ((all g ...) empty-s))
+   *          '())))))
+   */
+
+  /* produce at most n results
+   */
+  def run(n: Int, v: Var)(g: Goal) = {
+    val allres = g(empty_s)  map {s: Subst => reify(walk_*(v, s)) }
+    (if (n < 0) allres else (allres take n)) toList
   }
 }
