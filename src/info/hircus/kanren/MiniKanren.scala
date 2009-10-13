@@ -4,9 +4,9 @@ object MiniKanren {
   import java.util.HashMap
 
   /* Monads */
-  def succeed(s: Subst): Option[Stream[Subst]] =
-    Some(Stream.cons(s, Stream.empty))
-  def fail(s: Subst): Option[Stream[Subst]] = None
+  def succeed(s: Subst): Stream[Subst] =
+    Stream.cons(s, Stream.empty)
+  def fail(s: Subst): Stream[Subst] = Stream.empty
 
   /* Logic variables */
   case class Var(name: Symbol, count: Int)
@@ -31,7 +31,7 @@ object MiniKanren {
       case (v1, x: Any) :: s2 => if (v==v1) Some(x) else lookup(v, s2)
     }
 
-  type Goal = (Subst) => Option[Stream[Subst]]
+  type Goal = (Subst) => Stream[Subst]
   def pairp(x: Any): Boolean =
     x.isInstanceOf[List[Any]] && x != Nil
 

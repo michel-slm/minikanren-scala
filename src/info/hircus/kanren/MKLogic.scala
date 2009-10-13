@@ -13,16 +13,15 @@ object MKLogic {
  *       ((a f) (mplus (g a)
  *                (lambdaf@ () (bind (f) g)))))))
  */
-  def bind(a_inf: Option[Stream[Subst]], g: Goal): Option[Stream[Subst]] = {
+  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] = {
     a_inf match {
-      case None => None
-      case Some(s: Stream[Subst]) => {
-	s match {
-	  case Stream.cons(a: Subst, Stream.empty) => g(a)
-	  case Stream.cons(a: Subst, f: Stream[Subst]) =>
-	    mplus(g(a), bind(Some(f), g))
+      case Stream.empty => a_inf
+      case Stream.cons(a: Subst, f: Stream[Subst]) =>
+	f match {
+	  case Stream.empty => g(a)
+	  case _ =>
+	    mplus(g(a), bind(f, g))
 	}
-      }
     }
   }
 
@@ -34,18 +33,10 @@ object MKLogic {
  *       ((a f0) (choice a
  *                 (lambdaf@ () (mplus (f0) f)))))))
  */
-  def mplus(a_inf: Option[Stream[Subst]],
-	    f: => Option[Stream[Subst]]): Option[Stream[Subst]] = {
-    a_inf match {
-      case None => f
-      case Some(Stream.cons(a, st)) =>
-	Some(Stream.cons(a, (if (st == Stream.empty) f
-			     else mplus(Some(st), f)) match {
-			       case None => Stream.empty
-			       case Some(f2) => f2
-			     }))
-    }
-  }
+  def mplus(a_inf: Stream[Subst],
+	    f: => Stream[Subst]): Stream[Subst] =
+    a_inf append f
+
 
 /* (define-syntax anye
   *   (syntax-rules ()
@@ -125,13 +116,7 @@ object MKLogic {
   /* produce at most n results */
   /* Note: sometimes the syntactic sugar of omitting . for method access fails */
   def run(n: Int, v: Var)(g: Goal) = {
-    g(empty_s) match {
-      case None => Nil
-      case Some(sos: Stream[Subst]) => {
-	val allres = sos map {s: Subst => reify(walk_*(v, s)) }
-	(if (n < 0) allres else allres take n).toList
-      }
-    }
+    val allres = g(empty_s)  map {s: Subst => reify(walk_*(v, s)) }
+    (if (n < 0) allres else allres take n).toList
   }
-
 }
