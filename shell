@@ -1,0 +1,2 @@
+#!/bin/sh
+scala -cp bin -i src/shell.scala

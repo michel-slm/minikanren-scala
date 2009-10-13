@@ -13,7 +13,7 @@ object UnifySpecification extends Properties("Unification") {
   }
 
   property("bindonce") = forAll { n: Int =>
-    val v = Var('v)
+    val v = make_var('v)
     (for {
       s <- unify(v, n, empty_s)
       res <- lookup(v, s)
@@ -24,7 +24,7 @@ object UnifySpecification extends Properties("Unification") {
   }
   
   property("bindtwice") = forAll { (vstr: String, m: Int, n: Int) =>
-    val v = Var(Symbol(vstr))
+    val v = make_var(Symbol(vstr))
     (for {
       s1 <- unify(v, m, empty_s)
       s2 <- unify(v, n, s1)

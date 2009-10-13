@@ -1,28 +1,37 @@
 package info.hircus.kanren
 
 object MiniKanren {
+  import java.util.HashMap
+
   /* Monads */
-  def succeed[A](s: A): Option[A] = Some(s)
-  def fail[A](s: A): Option[A] = None
+  def succeed(s: Subst): Option[Stream[Subst]] =
+    Some(Stream.cons(s, Stream.empty))
+  def fail(s: Subst): Option[Stream[Subst]] = None
 
   /* Logic variables */
-  case class Var(name: Symbol)
+  case class Var(name: Symbol, count: Int)
+  private val m = new HashMap[Symbol, Int]()
+  def make_var(name: Symbol) = {
+    val count = m.get(name)
+    m.put(name, count+1)
+    Var(name, count)
+  }
 
   type Binding = (Var, Any)
 
-  /* Substitutions */
-  type Substitution = Stream[Binding]
-  val empty_s = Stream.empty
+  /* Substitution */
+  type Subst = List[Binding]
+  val empty_s = Nil
 
-  def ext_s(v: Var, x: Any, s: => Substitution): Substitution = Stream.cons((v, x), s)
+  def ext_s(v: Var, x: Any, s: Subst): Subst = (v, x) :: s
 
-  def lookup(v: Any, s: Stream[Any]): Option[Any] =
+  def lookup(v: Any, s: List[(Any,Any)]): Option[Any] =
     s match {
-      case Stream.empty => None
-      case Stream.cons((v1, x: Any), s2) => if (v==v1) Some(x) else lookup(v, s2)
+      case Nil => None
+      case (v1, x: Any) :: s2 => if (v==v1) Some(x) else lookup(v, s2)
     }
 
-  type Goal = (Substitution) => Option[Substitution]
+  type Goal = (Subst) => Option[Stream[Subst]]
   def pairp(x: Any): Boolean =
     x.isInstanceOf[List[Any]] && x != Nil
 
@@ -42,7 +51,7 @@ object MiniKanren {
  * 
 */
 
-  def walk(v: Any, s: Substitution): Any =
+  def walk(v: Any, s: Subst): Any =
     if (v.isInstanceOf[Var]) lookup(v, s) match {
       case Some(x) => walk(x, s)
       case None => v
@@ -60,7 +69,7 @@ object MiniKanren {
  *            (walk* (cdr v) s)))
  *         (else v)))))
 */
-  def walk_*(v: Any, s: Substitution): Any = {
+  def walk_*(v: Any, s: Subst): Any = {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var]) v1
     else if (pairp(v1)) {
@@ -86,7 +95,7 @@ object MiniKanren {
   def reify_name(n: Int) =
     Symbol("_." + n)
   
-  def reify_s(v: Any, s: Substitution): Substitution= {
+  def reify_s(v: Any, s: Subst): Subst= {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var]) ext_s(v1.asInstanceOf[Var], reify_name(s.length), s)
     else if (pairp(v1)) {
@@ -101,7 +110,7 @@ object MiniKanren {
  */    
   def reify(v: Any) = walk_*(v, reify_s(v, empty_s))
 
-  def unify(term1: Any, term2: Any, s: Substitution): Option[Substitution] = {
+  def unify(term1: Any, term2: Any, s: Subst): Option[Subst] = {
     val t1 = walk(term1, s)
     val t2 = walk(term2, s)
 
@@ -116,7 +125,7 @@ object MiniKanren {
 
       unify(ls1.head, ls2.head, s) match {
 	case None => return None
-	case Some(s2: Substitution) =>
+	case Some(s2: Subst) =>
 	  return unify(ls1.tail, ls2.tail, s2)
       }
     }

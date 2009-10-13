@@ -13,7 +13,7 @@ object SubstSpecification extends Properties("Substitution") {
   }
 
   property("freshvar") = forAll { (vstr: String) =>
-    val v = Var(Symbol(vstr))
+    val v = make_var(Symbol(vstr))
     walk_*(v,reify_s(v, empty_s)) == Symbol("_.0")
   }
   
@@ -22,7 +22,7 @@ object SubstSpecification extends Properties("Substitution") {
    */
   property("freshvarls") = forAll { (n: Int, ls: List[Int]) =>
     
-    val vars = (n::ls) map { n: Int => Var(Symbol(n.toString)) }
+    val vars = (n::ls) map { n: Int => make_var(Symbol(n.toString)) }
     
     val s = reify_s(vars, empty_s)
     

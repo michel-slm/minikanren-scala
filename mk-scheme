@@ -1,0 +1,4 @@
+#!/bin/sh
+pushd ${HOME}/checkouts/upstream/kanren/mini
+petite mybook.ss
+popd
