@@ -4,6 +4,23 @@ object MKLib {
   import info.hircus.kanren.MiniKanren._
   import info.hircus.kanren.MKLogic._
 
+  /**
+   * Utility function to convert a Scala linked list to a
+   * pair that is more digestible
+   */
+  def list2pair(l: List[Any]): Any = l match {
+    case Nil => Nil
+    case h :: tl => (h, list2pair(tl))
+  }
+
+  /**
+   * Utility function to convert back from nested pairs to a list
+   */
+  def pair2list(p: Any): List[Any] = p match {
+    case Nil => Nil
+    case (h, tl) => h :: pair2list(tl)
+  }
+
   def car_o(p: Any, a: Any): Goal = {
     val d = make_var('d)
     mkEqual( (a, d), p )

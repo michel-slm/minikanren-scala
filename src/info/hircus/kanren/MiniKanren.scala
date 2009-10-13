@@ -75,7 +75,7 @@ object MiniKanren {
     if (v1.isInstanceOf[Var]) v1
     else if (pairp(v1)) {
       val ls = v1.asInstanceOf[(Any,Any)]
-      (walk_*(ls._1, s), walk_*(ls._2, s).asInstanceOf[(Any,Any)])
+      (walk_*(ls._1, s), walk_*(ls._2, s))
     } else v1
   }
 

@@ -36,9 +36,8 @@ object MKLogic {
   *        (mplus (g1 s)
   *          (lambdaf@ () (g2 s)))))))
   */
-  def any_e(g1: Goal, g2: Goal)(s: Subst) = {
-    mplus(g1(s), g2(s))
-  }
+  def any_e(g1: Goal, g2: Goal): Goal = { s: Subst =>
+    mplus(g1(s), g2(s)) }
 
 /* (define-syntax all
  *   (syntax-rules ()

@@ -22,33 +22,19 @@ object RunSpecification extends Properties("Run") {
   property("all0") = run(-1, v)(all()) == List(Symbol("_.0"))
   property("all1") = forAll { n: Int => run(-1, v)(all(mkEqual(v, n))) == List(n) }
   property("all*") = forAll { (m: Int, n: Int) =>
-    run(-1, v)(all(mkEqual(v, n), mkEqual(w, m))) == n &&
-    run(-1, w)(all(mkEqual(v, n), mkEqual(w, m))) == m
+    (m==n ||
+     run(-1, v)(all(mkEqual(v, n), mkEqual(w, m))) == List(n))
   }
 
-  /* test-check "conde extensive"
-   *   (run* (x)
-   *     (fresh (y)
-   *       (conde
-   *         ((conde
-   *            ((== y 1))
-   *            ((== y 11))))
-   *         ((conde
-   *            ((== y 2))
-   *            (fail)
-   *            ((== y 3)))))
-   *       (conde
-   *         ((== x y))
-   *         ((== x 100)))))
-   *   '(1 100 11 100 2 100 3 100))
-   *
-  property("conde") = run(-1, v) { s: Subst =>
-    val y = make_var('y)
-    all(cond_e(List(cond_e(List(mkEqual(y, 1) _, mkEqual(y, 11) _))),
-	       List(cond_e(List(mkEqual(y, 2) _, fail _, mkEqual(y, 3) _)))),
-	cond_e(List(mkEqual(v, y) _), List(mkEqual(v, 100) _)))(s)
-  } == List(1, 100, 11, 100, 2, 100, 3, 100)
-  */
+  property("all-any") = forAll { (m: Int, n: Int) =>
+    m==n ||
+    (run(-1, v)(all(mkEqual(v, n), any_e(mkEqual(v, m), mkEqual(v, n)))) 
+     == List(n)) }
+
+  property("ife") = forAll { (m: Int, n: Int) =>
+    run(-1, v)(if_e(mkEqual(v, m), succeed,
+		    mkEqual(v, n))) == List(m, n) }
+
   property("null") = forAll { n: Int =>
     val x = make_var('x)
     if (n <= 0) true
@@ -75,5 +61,8 @@ object RunSpecification extends Properties("Run") {
   }
 
   property("member0") = run(-1, v)(member_o(v, Nil)) == Nil
-  property("member1") = forAll { n: Int => run(-1, v)(member_o(v, List(n))) == List(n) }
+  property("member1") = forAll { n: Int =>
+    run(-1, v)(member_o(v, (n,Nil))) == List(n) }
+  property("member*") = forAll { (n: Int, ls: List[Int]) =>
+    run(-1, v)(member_o(v, list2pair(n::ls))) == n::ls }
 }

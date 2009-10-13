@@ -21,16 +21,20 @@ object SubstSpecification extends Properties("Substitution") {
    * contains as many bindings as there are unique variables
    */
   property("freshvarls") = forAll { (n: Int, ls: List[Int]) =>
-    
+    import info.hircus.kanren.MKLib._
+
     val vars = (n::ls) map { n: Int => make_var(Symbol(n.toString)) }
-    
-    val s = reify_s(vars, empty_s)
+    val pvars = list2pair(vars).asInstanceOf[(Any,Any)]
+
+    val s = reify_s(pvars, empty_s)
     
     val unique_vars = remove_right_dups(vars)
     
-    (s.toList == reify_s(vars.tail, reify_s(vars.head, empty_s)).toList) &&
-      unique_vars.length == s.length &&
-      walk_*(unique_vars, s) == ((0 until s.length) map { reify_name(_) } toList)
+    ( (s.toList == reify_s(pvars._2,
+			   reify_s(pvars._1, empty_s)).toList) &&
+     unique_vars.length == s.length &&
+     pair2list(walk_*(list2pair(unique_vars), s)) ==
+       ((0 until s.length) map { reify_name(_) } toList) )
   }
   
 }
