@@ -25,23 +25,22 @@ object MKLib {
   }
 
   def list_o (l: Any): Goal =
-    cond_e(List(List(null_o(l), succeed _),
-		List(pair_o(l), { s: Subst =>
-		  val d = make_var('d)
-		  all(cdr_o(l, d),
-		      list_o(d))(s) })))
+    cond_e(List(null_o(l), succeed _),
+           List(pair_o(l), { s: Subst =>
+             val d = make_var('d)
+             all(cdr_o(l, d),
+                 list_o(d))(s) }))
 
   /* not sure why this is even needed */
   def eq_car_o(l: Any, x: Any): Goal =
     car_o(l, x)
   
   def member_o(x: Any, l: Any): Goal =
-    cond_e(List(List(null_o(l), fail _),
-		List(eq_car_o(l, x), succeed _),
-		List({s: Subst => val d = make_var('d)
-		      all(cdr_o(l, d),
-			  member_o(x, d))(s)
-		    }
-		)))
-  
+    cond_e(List(null_o(l), fail _),
+           List(eq_car_o(l, x), succeed _),
+           List({s: Subst =>
+	     val d = make_var('d)
+             all(cdr_o(l, d),
+                 member_o(x, d))(s)
+               } ))
 }

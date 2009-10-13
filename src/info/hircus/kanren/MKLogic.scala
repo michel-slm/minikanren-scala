@@ -72,11 +72,11 @@ object MKLogic {
  *      (anye (all g0 g ...) (conde c ...)))))
  */
 
-  def cond_e(cs: List[List[Goal]]): Goal = {
-    cs match {
+  def cond_e(cs: List[Goal]*): Goal = {
+    cs.toList match {
       case Nil => fail _
       case goals :: more_cs =>
-	any_e(all(goals: _*), cond_e(more_cs))
+	any_e(all(goals: _*), cond_e(more_cs: _*))
     }
   }
 
