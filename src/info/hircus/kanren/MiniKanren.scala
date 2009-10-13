@@ -4,9 +4,10 @@ object MiniKanren {
   import java.util.HashMap
 
   /* Monads */
-  def succeed(s: Subst): Stream[Subst] =
+  def succeed: Goal = { s: Subst =>
     Stream.cons(s, Stream.empty)
-  def fail(s: Subst): Stream[Subst] = Stream.empty
+  }
+  def fail: Goal = { s: Subst => Stream.empty }
 
   /* Logic variables */
   case class Var(name: Symbol, count: Int)

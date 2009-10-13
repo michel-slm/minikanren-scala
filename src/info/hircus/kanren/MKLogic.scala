@@ -49,26 +49,30 @@ object MKLogic {
 
   def all(gs: Goal*): Goal = {
     gs.toList match {
-      case Nil => succeed _
+      case Nil => succeed
       case g :: Nil => g
       case g :: gs2 =>
 	{ s: Subst => bind(g(s), all(gs2: _*)) }
     }
   }
-/* (define-syntax conde
- *   (syntax-rules (else)
- *     ((_) fail)
- *     ((_ (else g0 g ...)) (all g0 g ...))
- *     ((_ (g0 g ...) c ...)
- *      (anye (all g0 g ...) (conde c ...)))))
- */
 
-  def cond_e(cs: List[Goal]*): Goal = {
-    cs.toList match {
-      case Nil => fail _
-      case goals :: more_cs =>
-	any_e(all(goals: _*), cond_e(more_cs: _*))
-    }
+  /* (define-syntax ife
+   *   (syntax-rules ()
+   *     ((_ g0 g1 g2)
+   *      (lambdag@ (s)
+   *        (mplus ((all g0 g1) s)
+   *               (lambdaf@ () (g2 s)))))))
+   */
+
+  /**
+   * While we could use call-by-name here,
+   * since the goals are functions anyway, delaying evaluation is
+   * unnecessary
+   */
+  def if_e(g0: Goal, g1: Goal, g2: Goal): Goal = {
+    s: Subst =>
+      mplus(all(g0, g1)(s),
+	    g2(s))
   }
 
 /* (define-syntax case-inf
@@ -87,11 +91,11 @@ object MKLogic {
  *                  on-choice)))))))
  * 
  */
-  def mkEqual(t1: Any, t2: Any)(s: Subst) =
+  def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
     unify(t1, t2, s) match {
       case Some(s2) => succeed(s2)
-      case None => fail(s)
-    }
+      case None => fail(empty_s) // does not matter which substitution
+    } }
 
 /* (define-syntax run
  *   (syntax-rules ()

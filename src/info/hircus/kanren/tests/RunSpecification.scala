@@ -41,14 +41,14 @@ object RunSpecification extends Properties("Run") {
    *         ((== x y))
    *         ((== x 100)))))
    *   '(1 100 11 100 2 100 3 100))
-   */
+   *
   property("conde") = run(-1, v) { s: Subst =>
     val y = make_var('y)
     all(cond_e(List(cond_e(List(mkEqual(y, 1) _, mkEqual(y, 11) _))),
 	       List(cond_e(List(mkEqual(y, 2) _, fail _, mkEqual(y, 3) _)))),
 	cond_e(List(mkEqual(v, y) _), List(mkEqual(v, 100) _)))(s)
   } == List(1, 100, 11, 100, 2, 100, 3, 100)
-
+  */
   property("null") = forAll { n: Int =>
     val x = make_var('x)
     if (n <= 0) true

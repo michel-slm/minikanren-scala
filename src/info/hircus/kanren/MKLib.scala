@@ -6,41 +6,39 @@ object MKLib {
 
   def car_o(p: Any, a: Any): Goal = {
     val d = make_var('d)
-    mkEqual( (a, d), p ) _
+    mkEqual( (a, d), p )
   }
 
   def cdr_o(p: Any, d: Any): Goal = {
     val a = make_var('a)
-    mkEqual( (a, d), p ) _
+    mkEqual( (a, d), p )
   }
 
   def pair_o(p: Any): Goal = {
     val a = make_var('a)
     val d = make_var('d)
-    mkEqual( (a, d), p ) _
+    mkEqual( (a, d), p )
   }
 
   def null_o(x: Any): Goal = {
-    mkEqual( Nil, x ) _
+    mkEqual( Nil, x )
   }
 
   def list_o (l: Any): Goal =
-    cond_e(List(null_o(l), succeed _),
-           List(pair_o(l), { s: Subst =>
-             val d = make_var('d)
-             all(cdr_o(l, d),
-                 list_o(d))(s) }))
+    if_e(null_o(l), succeed,
+	 if_e(pair_o(l), { s: Subst =>
+           val d = make_var('d)
+	   all(cdr_o(l, d),
+               list_o(d))(s) },
+	      fail))
 
-  /* not sure why this is even needed */
-  def eq_car_o(l: Any, x: Any): Goal =
-    car_o(l, x)
   
   def member_o(x: Any, l: Any): Goal =
-    cond_e(List(null_o(l), fail _),
-           List(eq_car_o(l, x), succeed _),
-           List({s: Subst =>
-	     val d = make_var('d)
-             all(cdr_o(l, d),
-                 member_o(x, d))(s)
+    if_e(null_o(l), fail,
+         if_e(car_o(l, x), succeed,
+	      {s: Subst =>
+		val d = make_var('d)
+                all(cdr_o(l, d),
+                member_o(x, d))(s)
                } ))
 }
