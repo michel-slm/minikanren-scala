@@ -13,17 +13,8 @@ object MKLogic {
  *       ((a f) (mplus (g a)
  *                (lambdaf@ () (bind (f) g)))))))
  */
-  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] = {
-    a_inf match {
-      case Stream.empty => a_inf
-      case Stream.cons(a: Subst, f: Stream[Subst]) =>
-	f match {
-	  case Stream.empty => g(a)
-	  case _ =>
-	    mplus(g(a), bind(f, g))
-	}
-    }
-  }
+  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
+    a_inf flatMap g
 
 /* (define mplus
  *   (lambda (a-inf f)
