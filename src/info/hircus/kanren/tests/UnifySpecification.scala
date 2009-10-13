@@ -2,10 +2,14 @@ package info.hircus.kanren.tests
 
 import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
+import info.hircus.kanren.MKLogic._
 
 object UnifySpecification extends Properties("Unification") {
   import Prop.forAll
-  
+
+  val v = make_var('v)
+  val w = make_var('w)
+
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {
     if (s.isEmpty) s
@@ -34,5 +38,11 @@ object UnifySpecification extends Properties("Unification") {
       case None => true
     }
   }
-  
+
+  property("pairs") = forAll { (m:Int, n: Int) =>
+    def pairGoal: Goal =
+      mkEqual((v, w), (m, n))
+    
+    run(-1, v)(pairGoal) == List(m) &&
+    run(-1, w)(pairGoal) == List(n) }
 }

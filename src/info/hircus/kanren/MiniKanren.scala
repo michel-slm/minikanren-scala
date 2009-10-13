@@ -34,7 +34,7 @@ object MiniKanren {
 
   type Goal = (Subst) => Stream[Subst]
   def pairp(x: Any): Boolean =
-    x.isInstanceOf[List[Any]] && x != Nil
+    x.isInstanceOf[(Any,Any)]
 
 /*
  * (define walk
@@ -74,8 +74,8 @@ object MiniKanren {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var]) v1
     else if (pairp(v1)) {
-      val ls = v1.asInstanceOf[List[Any]]
-      walk_*(ls.head, s) :: walk_*(ls.tail, s).asInstanceOf[List[Any]]
+      val ls = v1.asInstanceOf[(Any,Any)]
+      (walk_*(ls._1, s), walk_*(ls._2, s).asInstanceOf[(Any,Any)])
     } else v1
   }
 
@@ -100,8 +100,8 @@ object MiniKanren {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var]) ext_s(v1.asInstanceOf[Var], reify_name(s.length), s)
     else if (pairp(v1)) {
-      val ls = v1.asInstanceOf[List[Any]]
-      reify_s(ls.tail, reify_s(ls.head, s))
+      val ls = v1.asInstanceOf[(Any,Any)]
+      reify_s(ls._2, reify_s(ls._1, s))
     } else s
   }
 
@@ -121,13 +121,13 @@ object MiniKanren {
     else if (t2.isInstanceOf[Var])
       return Some(ext_s(t2.asInstanceOf[Var], t1, s))
     else if (pairp(t1) && pairp(t2)) {
-      val ls1 = t1.asInstanceOf[List[Any]]
-      val ls2 = t2.asInstanceOf[List[Any]]
+      val ls1 = t1.asInstanceOf[(Any,Any)]
+      val ls2 = t2.asInstanceOf[(Any,Any)]
 
-      unify(ls1.head, ls2.head, s) match {
+      unify(ls1._1, ls2._1, s) match {
 	case None => return None
 	case Some(s2: Subst) =>
-	  return unify(ls1.tail, ls2.tail, s2)
+	  return unify(ls1._2, ls2._2, s2)
       }
     }
     else if (t1 == t2) return Some(s)
