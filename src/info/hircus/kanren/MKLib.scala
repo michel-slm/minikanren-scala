@@ -28,8 +28,8 @@ object MKLib {
     cond_e(List(List(null_o(l), succeed _),
 		List(pair_o(l), { s: Subst =>
 		  val d = make_var('d)
-		  all(List(cdr_o(l, d),
-		  list_o(d)))(s) })))
+		  all(cdr_o(l, d),
+		      list_o(d))(s) })))
 
   /* not sure why this is even needed */
   def eq_car_o(l: Any, x: Any): Goal =
@@ -39,8 +39,8 @@ object MKLib {
     cond_e(List(List(null_o(l), fail _),
 		List(eq_car_o(l, x), succeed _),
 		List({s: Subst => val d = make_var('d)
-		      all(List(cdr_o(l, d),
-			       member_o(x, d)))(s)
+		      all(cdr_o(l, d),
+			  member_o(x, d))(s)
 		    }
 		)))
   

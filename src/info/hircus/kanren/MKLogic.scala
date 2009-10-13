@@ -56,12 +56,12 @@ object MKLogic {
  *     ((_ g^ g ...) (lambdag@ (s) (bind (g^ s) (all g ...))))))
  */
 
-  def all(gs: List[Goal]): Goal = {
-    gs match {
+  def all(gs: Goal*): Goal = {
+    gs.toList match {
       case Nil => succeed _
       case g :: Nil => g
       case g :: gs2 =>
-	{ s: Subst => bind(g(s), all(gs2)) }
+	{ s: Subst => bind(g(s), all(gs2: _*)) }
     }
   }
 /* (define-syntax conde
@@ -76,7 +76,7 @@ object MKLogic {
     cs match {
       case Nil => fail _
       case goals :: more_cs =>
-	any_e(all(goals), cond_e(more_cs))
+	any_e(all(goals: _*), cond_e(more_cs))
     }
   }
 

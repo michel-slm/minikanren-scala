@@ -19,11 +19,11 @@ object RunSpecification extends Properties("Run") {
     run(-1, v)(mkEqual(v, n)) == List(n)
   }
 
-  property("all0") = run(-1, v)(all(Nil)) == List(Symbol("_.0"))
-  property("all1") = forAll { n: Int => run(-1, v)(all(List(mkEqual(v, n)))) == List(n) }
+  property("all0") = run(-1, v)(all()) == List(Symbol("_.0"))
+  property("all1") = forAll { n: Int => run(-1, v)(all(mkEqual(v, n))) == List(n) }
   property("all*") = forAll { (m: Int, n: Int) =>
-    run(-1, v)(all(List(mkEqual(v, n), mkEqual(w, m)))) == n &&
-    run(-1, w)(all(List(mkEqual(v, n), mkEqual(w, m)))) == m
+    run(-1, v)(all(mkEqual(v, n), mkEqual(w, m))) == n &&
+    run(-1, w)(all(mkEqual(v, n), mkEqual(w, m))) == m
   }
 
   property("null") = forAll { n: Int =>
