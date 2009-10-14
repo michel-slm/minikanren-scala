@@ -37,6 +37,9 @@ object MKLib {
   /**
    * Utility function to convert a Scala linked list to a
    * pair that is more digestible
+   *
+   * @param l a Scala list
+   * @return a list made of nested pairs
    */
   def list2pair(l: List[Any]): Any = l match {
     case Nil => Nil
@@ -44,33 +47,65 @@ object MKLib {
   }
 
   /**
-   * Utility function to convert back from nested pairs to a list
+   * Utility function to convert back from nested pairs to a Scala list
+   *
+   * @param p a list made of nested pairs, Nil-terminated
+   * @return a Scala list
+   * @todo might have to return an exception for improper lists
    */
   def pair2list(p: Any): List[Any] = p match {
     case Nil => Nil
     case (h, tl) => h :: pair2list(tl)
   }
 
+  /**
+   * A relation unifying the head of the pair 'p' with 'a'
+   *
+   * @param p something pair-able
+   * @param a anything
+  */ 
   def car_o(p: Any, a: Any): Goal = {
     val d = make_var('d)
     mkEqual( (a, d), p )
   }
 
+  /**
+   * A relation unifying the tail of the pair 'p' with 'd'
+   *
+   * @param p something pair-able
+   * @param d anything
+   */
   def cdr_o(p: Any, d: Any): Goal = {
     val a = make_var('a)
     mkEqual( (a, d), p )
   }
 
+  /**
+   * A relation unifying p with a fresh pair of variables
+   *
+   * @param p something pair-able
+   */
   def pair_o(p: Any): Goal = {
     val a = make_var('a)
     val d = make_var('d)
     mkEqual( (a, d), p )
   }
 
+  /**
+   * A relation that unifies 'x' with the empty list
+   *
+   * @param x something null-able
+   */
   def null_o(x: Any): Goal = {
     mkEqual( Nil, x )
   }
 
+  /**
+   * A relation that unifies l with a Kanren list
+   * If l is fresh, this is actually a list generator
+   *
+   * @param l something list-able
+   */
   def list_o (l: Any): Goal =
     if_e(null_o(l), succeed,
 	 if_e(pair_o(l), { s: Subst =>
@@ -79,7 +114,15 @@ object MKLib {
                list_o(d))(s) },
 	      fail))
 
-  
+  /**
+   * A relation that unifies 'x' with an element from 'l'
+   * If x is fresh, collecting all results  yield all the elements of l
+   * If 'l' is fresh, generates all possible lists containing 'x'
+   * Otherwise, the only possible result is if 'x' matches an element in 'l'
+   *
+   * @param x any
+   * @param l something list-able
+   */
   def member_o(x: Any, l: Any): Goal =
     if_e(null_o(l), fail,
          if_e(car_o(l, x), succeed,
@@ -88,4 +131,26 @@ object MKLib {
                 all(cdr_o(l, d),
                 member_o(x, d))(s)
                } ))
+
+  /**
+   * see page 77 of Reasoned Schemer
+   *
+   * @param g a Goal
+   * @return a goal that succeeds if 'g' succeeds, and otherwise has
+   *         no value (bottom)
+   */
+  def any_o(g: Goal): Goal = if_e(g, succeed, any_o(g))
+
+  /**
+   * Bottom: this is a goal that never terminates if evaluated
+   * see page 77 of Reasoned Schemer
+   */
+  def never_o: Goal = any_o(fail)
+
+  /**
+   * Always: a goal that can succeed an infinite number of times
+   * see page 77-78 of Reasoned Schemer
+   */
+  def always_o: Goal = any_o(succeed)
+
 }
