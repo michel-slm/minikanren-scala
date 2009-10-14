@@ -1,7 +1,52 @@
 - Document the following Scala features:
   * converting to/from variadic arguments
+    cf. Lisp/Scheme's (apply fn args)
   * differences from Java: generics syntax, casting
-  * pattern-matching
-  * Hindley-Milner type inferencer
+  * contrast with Python:
+    - module => object
+    - def => def
+    - multiple inheritance => mixins
+  * OCaml / Haskell
+    - pattern-matching
+    -Hindley-Milner type inferencer
+     * can infer non-recursive return value
+     * can infer type of local variables/values
+     * can *not* infer type of fn args
+    e.g. the lookup function, all Goal
+
+    - richer libraries (JVM)
+
   * talk about REPL: can use to script Java code too!
   
+- Porting effort
+  * Scheme implementation of streams as pairs with thunked cdrs =>
+    built-in Scala Stream
+  * type-safety: instead of #f for empty stream, use Stream.empty
+    (different from a stream containing a single empty list)
+
+  * can use Scala's Option monad (Haskell's Maybe) but as it turns out
+    it complicates the code too much
+
+  * Scheme provides cond_e branching construct. The code looks so unwieldy
+    in Scala, going with if_e instead
+    
+    def if_e(g0: Goal, g1: Goal, g2: Goal): Goal = ...
+
+    note: not using call-by-name as goals are just functions anyway, cf.
+    a general if
+
+  * bind_e ==> in Scala, just a flatMap
+    keeping as separate function because there are equivalents
+    (bind_i, bind_a, etc.) that have to be coded by hand
+
+  * map_inf ==> Stream.map
+  * case_inf ==> just pattern matching on Streams
+
+  * any_e ==> easy
+
+  * all ==> interesting. talk about varargs
+
+  * Testing
+    Scala has several test framework, one of them, ScalaCheck (inspired by
+    Haskell's QuickCheck) that can generate test cases
+
