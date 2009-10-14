@@ -43,13 +43,11 @@ object BranchingSpecification extends Properties("Branching") {
   
   property("fail-then-never") = run(1, v)(all(fail, never_o)) == Nil
 
-/*
-  property("always-first") = forAll { n:Int =>
-    n==0 || run(n, v)(all(always_o, mkEqual(true, v))) == (
-      (for { x <- 0 until n } yield true) toList) }
+  property("always-first") = 
+    run(5, v)(all(always_o, mkEqual(true, v))) == (
+      (for { x <- 0 until 5 } yield true) toList)
 
-  property("always-second") = forAll { n:Int =>
-    n==0 || run(n, v)(all(mkEqual(true, v), always_o)) == (
-      (for { x <- 0 until n } yield true) toList) }
-*/
+  property("always-second") =
+    run(5, v)(all(mkEqual(true, v), always_o)) == (
+      (for { x <- 0 until 5 } yield true) toList)
 }

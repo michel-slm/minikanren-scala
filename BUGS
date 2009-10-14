@@ -1,6 +1,3 @@
 BUGS
 ====
 
-- 'all' relation must be short-circuiting
-  (cf. Branching test failures, Reasoned Schemer p. 77)
-

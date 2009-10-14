@@ -175,8 +175,16 @@ object MiniKanren {
    *       ((a f) (mplus (g a)
    *                (lambdaf@ () (bind (f) g)))))))
    */
-  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
-    a_inf flatMap g
+  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] = {
+    // this might be too eager
+    // a_inf flatMap g
+    a_inf match {
+      case Stream.empty => a_inf
+      case Stream.cons(a, f) => f match {
+	case Stream.empty => g(a)
+	case _ => mplus(g(a), bind(f, g))
+      }
+    } }
 
   /* (define mplus
    *   (lambda (a-inf f)
@@ -216,6 +224,12 @@ object MiniKanren {
     }
   }
 
+  /**
+   * Faster than all, if only two goals are used
+   */
+  def both(g0: Goal, g1: Goal): Goal = { s: Subst =>
+    g0(s) flatMap g1 }
+
   /* (define-syntax ife
    *   (syntax-rules ()
    *     ((_ g0 g1 g2)
@@ -225,14 +239,19 @@ object MiniKanren {
    */
 
   /**
-   * While we could use call-by-name here,
-   * since the goals are functions anyway, delaying evaluation is
-   * unnecessary
+   * if_e produces a goal that, given a substitution, produces a stream of substitutions
+   * starting with the result of running a combination of the first two goals on the substitution,
+   * followed by running the alternate goal.
+   *
+   * @param testg   The first, 'test' goal. Guards the consequent
+   * @param conseqg The 'consequent' goal
+   * @param altg    The alternate goal. Call-by-name as otherwise, in a situation with many nested if_e
+   *   (e.g. using any_o), the stack overflows.
    */
-  def if_e(g0: Goal, g1: Goal, g2: Goal): Goal = {
+  def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
     s: Subst =>
-      mplus(all(g0, g1)(s),
-	    g2(s))
+      mplus(both(testg, conseqg)(s),
+	    altg(s))
   }
 
   def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
