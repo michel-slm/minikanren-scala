@@ -1,11 +1,14 @@
 BASEDIR=info/hircus/kanren
 all: src/${BASEDIR}/MiniKanren.scala
+	mkdir -p bin
 	scalac -d bin src/${BASEDIR}/*.scala src/${BASEDIR}/tests/*.scala
 
 check:
-	cd bin
-	scala info.hircus.kanren.tests.SubstSpecification
-	scala info.hircus.kanren.tests.UnifySpecification
+	./check.sh
+
+apidoc:
+	mkdir -p api
+	scaladoc -d api src/${BASEDIR}/*.scala
 
 clean:
 	-rm -rf bin/*

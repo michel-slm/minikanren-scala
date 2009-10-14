@@ -1,0 +1,7 @@
+- Document the following Scala features:
+  * converting to/from variadic arguments
+  * differences from Java: generics syntax, casting
+  * pattern-matching
+  * Hindley-Milner type inferencer
+  * talk about REPL: can use to script Java code too!
+  

@@ -2,6 +2,7 @@
 .manager
 .project
 .scala_dependencies
+api
 bin
 *.class
 *~
