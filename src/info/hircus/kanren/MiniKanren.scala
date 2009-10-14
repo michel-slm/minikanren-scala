@@ -175,16 +175,17 @@ object MiniKanren {
    *       ((a f) (mplus (g a)
    *                (lambdaf@ () (bind (f) g)))))))
    */
-  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] = {
-    // this might be too eager
-    // a_inf flatMap g
+  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
+    a_inf flatMap g
+
+  def bind_i(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
     a_inf match {
       case Stream.empty => a_inf
       case Stream.cons(a, f) => f match {
 	case Stream.empty => g(a)
-	case _ => mplus(g(a), bind(f, g))
+	case _ => mplus_i(g(a), bind(f, g))
       }
-    } }
+    }
 
   /* (define mplus
    *   (lambda (a-inf f)
@@ -197,6 +198,24 @@ object MiniKanren {
   def mplus(a_inf: Stream[Subst],
 	    f: => Stream[Subst]): Stream[Subst] =
     a_inf append f
+
+  /**
+   * Like mplus, but interleaves the two input streams
+   * Allows a goal to proceed even if the first subgoal is bottom
+   *
+   * @param a_inf a stream of substitutions
+   * @param f     a second stream of substitutions to append
+   * @return an interleaved stream of substitutions
+   */
+  def mplus_i(a_inf: Stream[Subst],
+	    f: => Stream[Subst]): Stream[Subst] = a_inf match {
+    case Stream.empty => f
+    case Stream.cons(a, f0) => f0 match {
+      case Stream.empty => Stream.cons(a, f)
+      case _ => Stream.cons(a, mplus_i(f, f0))
+    }
+
+  }
 
 
   /* (define-syntax anye
@@ -215,14 +234,18 @@ object MiniKanren {
    *     ((_ g) (lambdag@ (s) (g s)))
    *     ((_ g^ g ...) (lambdag@ (s) (bind (g^ s) (all g ...))))))
    */
-  def all(gs: Goal*): Goal = {
+  def all_aux(bindfn: (Stream[Subst], Goal) => Stream[Subst])(gs: Goal*): Goal = {
     gs.toList match {
       case Nil => succeed
       case g :: Nil => g
       case g :: gs2 =>
-	{ s: Subst => bind(g(s), all(gs2: _*)) }
+	{ s: Subst => bindfn(g(s), all(gs2: _*)) }
     }
   }
+
+  def all   = all_aux(bind) _
+  def all_i = all_aux(bind_i) _
+
 
   /**
    * Faster than all, if only two goals are used
@@ -251,6 +274,12 @@ object MiniKanren {
   def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
     s: Subst =>
       mplus(both(testg, conseqg)(s),
+	    altg(s))
+  }
+
+  def if_i(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
+    s: Subst =>
+      mplus_i(both(testg, conseqg)(s),
 	    altg(s))
   }
 
