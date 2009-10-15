@@ -39,6 +39,14 @@ import info.hircus.kanren.MKLib._
 object MathSpecification extends Properties("Math") {
   import Prop.forAll
 
+  private val MIN_INT=0
+  private val MAX_INT=1000000000
+
+  private val pairGen = for {
+    n <- Gen.choose(MIN_INT, MAX_INT)
+    m <- Gen.choose(MIN_INT, MAX_INT)
+  } yield (n,m)
+
   val b = make_var('b)
   val x = make_var('x)
   val y = make_var('y)
@@ -53,62 +61,55 @@ object MathSpecification extends Properties("Math") {
 
   property("half-adder-o") = {
     ((run(-1, s)(both(half_adder_o(x,y,r,c),
-		     mkEqual(list2pair(List(x,y,r,c)), s))) map pair2list _ )
+                     mkEqual(list2pair(List(x,y,r,c)), s))) map pair2list _ )
      ==
        List(List(0,0,0,0),
-	    List(1,0,1,0),
-	    List(0,1,1,0),
-	    List(1,1,0,1)) ) }
+            List(1,0,1,0),
+            List(0,1,1,0),
+            List(1,1,0,1)) ) }
 
   property("full-adder-o") = {
     ((run(-1, s)(both(full_adder_o(b,x,y,r,c),
-		      mkEqual(list2pair(List(b,x,y,r,c)), s))) map pair2list _ )
+                      mkEqual(list2pair(List(b,x,y,r,c)), s))) map pair2list _ )
      ==
        List(List(0,0,0,0,0),
-	    List(1,0,0,1,0),
-	    List(0,1,0,1,0),
-	    List(1,1,0,0,1),
-	    List(0,0,1,1,0),
-	    List(1,0,1,0,1),
-	    List(0,1,1,0,1),
-	    List(1,1,1,1,1)) ) }
+            List(1,0,0,1,0),
+            List(0,1,0,1,0),
+            List(1,1,0,0,1),
+            List(0,0,1,1,0),
+            List(1,0,1,0,1),
+            List(0,1,1,0,1),
+            List(1,1,1,1,1)) ) }
 
   property("gen-adder-o") = {
     ((run(-1,s)(gen_adder_o(1, list2pair(List(0,1,1)),
-			  list2pair(List(1,1)), s))) map pair2list _) == List(List(0,1,0,1))
+                          list2pair(List(1,1)), s))) map pair2list _) == List(List(0,1,0,1))
   }
 
   property("adder-o") = {
     val res = ((run(-1, s)(both(adder_o(0, x, y, list2pair(List(1,0,1))),
-			       mkEqual((x,(y,Nil)), s)))) map pair2list _ )
+                               mkEqual((x,(y,Nil)), s)))) map pair2list _ )
     ( (res map { l: List[Any] => l map pair2list _ } )
      ==
        List(List(List(1,0,1), Nil),
-	    List(Nil, List(1,0,1)),
-	    List(List(1), List(0,0,1)),
-	    List(List(0,0,1), List(1)),
-	    List(List(1,1), List(0,1)),
-	    List(List(0,1), List(1,1))) )
+            List(Nil, List(1,0,1)),
+            List(List(1), List(0,0,1)),
+            List(List(0,0,1), List(1)),
+            List(List(1,1), List(0,1)),
+            List(List(0,1), List(1,1))) )
   }
 
-  property("build-read") = forAll { n: Int =>
-    n < -1000000 || n > 1000000  || {
-      val m = Math.abs(n)
-      read_num(build_num(m)) == m
-    } }
+  property("build-read") = forAll(Gen.choose(MIN_INT, MAX_INT)) { n =>
+    read_num(build_num(n)) == n }
 
-  property("add_o") = forAll { (n: Int, m: Int) =>
-    n < -1000000 || n > 1000000 || m < -1000000 || m > 1000000 || {
-      val abs_n = Math.abs(n)
-      val abs_m = Math.abs(m)
-      run(-1, s)(add_o(build_num(abs_n), build_num(abs_m), s)) == List(build_num(abs_n+abs_m))
-    } }
+  property("add_o") = forAll(pairGen) { p =>
+    run(-1, s)(add_o(build_num(p _1),
+                     build_num(p _2),
+                     s)) == List(build_num(p._1+p._2)) }
 
-  property("sub_o") = forAll { (n: Int, m: Int) =>
-    n < -1000000 || n > 1000000 || m < -1000000 || m > 1000000 || {
-      val abs_n = Math.abs(n)
-      val abs_m = Math.abs(m) + 1 // make sure n+m strictly greater than n
-      run(-1, s)(sub_o(build_num(abs_n), build_num(abs_n + abs_m), s)) == Nil
-    } }
-			      
+  property("sub_o") = forAll(pairGen) { p =>
+    run(-1, s)(sub_o(build_num(p _1),
+                     build_num(p._1+p._2+1),
+                     s)) == Nil }
+                              
 }
