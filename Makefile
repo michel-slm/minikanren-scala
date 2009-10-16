@@ -1,7 +1,7 @@
 BASEDIR=info/hircus/kanren
 TITLE="Mini Kanren"
 
-bin: src/${BASEDIR}/*.scala
+bin: src/${BASEDIR}/*.scala src/${BASEDIR}/tests/*.scala
 	$(shell [ -d bin ] && touch -m bin || mkdir -p bin)
 	scalac -d bin src/${BASEDIR}/*.scala src/${BASEDIR}/tests/*.scala
 
