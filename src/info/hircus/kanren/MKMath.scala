@@ -92,6 +92,12 @@ object MKMath {
     case (x, p) => x.asInstanceOf[Int] + (read_num(p) << 1)
   }
 
+  /* "Predicates" */
+  /**
+   * succeeds when n represents a positive number
+   *
+   * @param n a bitlist number
+   */
   def pos_o(n: Any): Goal = {
     val a = make_var('a)
     val d = make_var('d)
@@ -99,12 +105,30 @@ object MKMath {
     mkEqual((a,d), n)
   }
 
+  /**
+   * succeeds when n represents a number > 1
+   *
+   * @param n a bitlist number
+   */
   def gt1_o(n: Any): Goal = {
     val a  = make_var('a)
     val ad = make_var('ad)
     val dd = make_var('dd)
 
     mkEqual((a,(ad,dd)), n)
+  }
+
+  def digit_o(a: Any): Goal = {
+    cond_e((mkEqual(a, build_num(0)), succeed),
+	   (mkEqual(a, build_num(1)), succeed),
+	   (mkEqual(a, build_num(2)), succeed),
+	   (mkEqual(a, build_num(3)), succeed),
+	   (mkEqual(a, build_num(4)), succeed),
+	   (mkEqual(a, build_num(5)), succeed),
+	   (mkEqual(a, build_num(6)), succeed),
+	   (mkEqual(a, build_num(7)), succeed),
+	   (mkEqual(a, build_num(8)), succeed),
+	   (mkEqual(a, build_num(9)), succeed))
   }
 
   def gen_adder_o(d:Any, n: Any, m: Any, r: Any): Goal = {

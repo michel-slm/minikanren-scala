@@ -283,6 +283,20 @@ object MiniKanren {
 	    altg(s))
   }
 
+  def cond_aux(ifer: (Goal, Goal, =>Goal) => Goal)(gs: (Goal,Goal)*): Goal = {
+    gs.toList match {
+      case Nil => fail
+      case (g0, g1) :: gs2 => gs2 match {
+	case Nil => both(g0, g1)
+	case _ => ifer(g0, g1,
+		       cond_aux(ifer)(gs2: _*))
+      } } }
+
+  def cond_e = cond_aux(if_e _) _
+  def cond_i = cond_aux(if_i _) _
+
+  
+
   def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
     unify(t1, t2, s) match {
       case Some(s2) => succeed(s2)

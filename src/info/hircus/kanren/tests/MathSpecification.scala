@@ -65,6 +65,10 @@ object MathSpecification extends Properties("Math") {
   property("bit-and-o 0") = run(-1, s)(both(bit_and_o(x,y,0), mkEqual((x,y), s))) == List((0,0),(1,0),(0,1))
   property("bit-and-o 1") = run(-1, s)(both(bit_and_o(x,y,1), mkEqual((x,y), s))) == List((1,1))
 
+  property("digit-o") = {
+    ((run(-1, x)(digit_o(x))) map read_num _) == ((0 until 10) toList)
+  }
+
   property("half-adder-o") = {
     ((run(-1, s)(both(half_adder_o(x,y,r,c),
                      mkEqual(list2pair(List(x,y,r,c)), s))) map pair2list _ )
