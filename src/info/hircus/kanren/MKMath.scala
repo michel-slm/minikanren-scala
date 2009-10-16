@@ -33,6 +33,7 @@ package info.hircus.kanren
 
 object MKMath {
   import info.hircus.kanren.MiniKanren._
+  import info.hircus.kanren.Prelude._
 
   def bit_xor_o(x: Any, y: Any, r: Any): Goal = {
     if_e(both(mkEqual(0,x), mkEqual(0,y)), mkEqual(0,r),
@@ -144,4 +145,60 @@ object MKMath {
   def add_o(n: Any, m: Any, k: Any): Goal = adder_o(0, n, m, k)
   def sub_o(n: Any, m: Any, k: Any): Goal = adder_o(0, m, k, n)
 
+  /* Multiplication */
+
+  /**
+   * The multiplication relation
+   *
+   * @param n a bitlist number
+   * @param m a bitlist number
+   * @param p the product bitlist
+   */
+  def mul_o(n: Any, m: Any, p: Any): Goal = {
+    if_i(mkEqual(Nil,n), mkEqual(Nil, p),
+	 if_i(both(pos_o(n), mkEqual(Nil,m)), mkEqual(Nil,p),
+	      if_i(both(mkEqual((1,Nil),n), pos_o(m)), mkEqual(m,p),
+		   if_i(both(gt1_o(n), mkEqual((1,Nil),m)), mkEqual(n,p),
+			if_i({ s: Subst => {
+			  val x = make_var('x)
+			  val z = make_var('z)
+			  all(mkEqual((0,x),n), pos_o(x),
+			      mkEqual((0,z),p), pos_o(z),
+			      gt1_o(m),
+			      mul_o(x,m,z))(s) }}, succeed,
+			     if_i({ s: Subst => {
+			       val x = make_var('x)
+			       val y = make_var('y)
+			       all(mkEqual((1,x),n), pos_o(x),
+				   mkEqual((0,y),m), pos_o(y),
+				   mul_o(m,n,p))(s) }}, succeed,
+				  if_i({ s: Subst => {
+				    val x = make_var('x)
+				    val y = make_var('y)
+				    all(mkEqual((1,x),n), pos_o(x),
+					mkEqual((1,y),m), pos_o(y),
+					odd_mul_o(x,n,m,p))(s) }}, succeed,
+				       fail)))))))
+  }
+
+  def odd_mul_o(x: Any, n: Any, m: Any, p: Any) = {
+    val q = make_var('q)
+    all(bound_mul_o(q,p,n,m),
+	mul_o(x,m,q),
+	add_o((0,q), m, p))
+  }
+
+  def bound_mul_o(q: Any, p: Any, n: Any, m: Any): Goal = {
+    if_e(null_o(q), pair_o(p),
+	 { s: Subst => {
+	   val x = make_var('x)
+	   val y = make_var('y)
+	   val z = make_var('z)
+	   all(cdr_o(q,x),
+	       cdr_o(p,y),
+	       if_i(both(null_o(n), cdr_o(m, z)),
+		    bound_mul_o(x,y,z,Nil),
+		    both(cdr_o(n,z), bound_mul_o(x,y,z,m))))(s) } } )
+  }
+			  
 }
