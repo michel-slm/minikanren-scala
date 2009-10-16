@@ -1,6 +1,14 @@
 Porting the Mini-Kanren logic system to Scala
 =============================================
 
+:Author: Michel Alexandre Salim
+
+.. image:: http://i.creativecommons.org/l/by-sa/3.0/us/88x31.png
+   :height: 31px
+   :width:  88px
+   :alt:    Creative Commons License
+   :align:  center
+
 Abstract
 --------
 
@@ -20,12 +28,12 @@ Outline
 
 This presentation is in three sections:
 
-1. The `Mini-Kanren`_ logic system
-2. `Why Scala`_
+1. `The Mini-Kanren logic system`_
+2. `An overview of Scala`_
 3. `The port`_
 
-Mini-Kanren
------------
+The Mini-Kanren logic system
+----------------------------
 
 To many ears, the term *logic programming* is virtually synonymous
 with Prolog (see [Colmerauer92]_ for a historical treatment). Outside
@@ -34,9 +42,12 @@ tend not to be exposed to the field -- in most cases, students are
 first exposed to procedural, then object-oriented, then functional
 languages\ [*]_.
 
+.. [Colmerauer92] *The birth of Prolog*, Colmerauer and Russell, 1992
+
+.. class:: incremental
 
 .. [*] If they are (un)lucky, functional comes first
-.. [Colmerauer92] *The birth of Prolog*, Colmerauer and Russell, 1992
+
 
 Mini-Kanren: References
 -----------------------
@@ -72,94 +83,23 @@ substitutions. There are two basic goals:
 - **succeed** (**#s**) returns a stream containing only the input substitution
 - **fail** (**#u**) returns an empty stream
 
-Mini-Kanren: mplus
-------------------
-
-::
-
-  (define mplus
-    (lambda (a-inf f)
-      (case-inf a-inf
-        (f) 
-        ((a) (choice a f))
-        ((a f0) (choice a 
-                  (lambdaf@ () (mplus (f0) f)))))))
-
-Mini-Kanren: mplus\ :sup:`i`
-----------------------------
-
-::
-
-  (define mplusi
-    (lambda (a-inf f)
-      (case-inf a-inf
-        (f) 
-        ((a) (choice a f))
-        ((a f0) (choice a 
-                  (lambdaf@ () (mplusi (f) f0)))))))
-
-
-Mini-Kanren: bind
------------------
-
-::
-
-  (define bind
-    (lambda (a-inf g)
-      (case-inf a-inf
-        (mzero)
-        ((a) (g a))
-        ((a f) (mplus (g a)
-                 (lambdaf@ () (bind (f) g)))))))
-
-Mini-Kanren: bind\ :sup:`i`
----------------------------
-
-::
-
-  (define bindi
-    (lambda (a-inf g)
-      (case-inf a-inf
-        (mzero)
-        ((a) (g a))
-        ((a f) (mplusi (g a)
-                 (lambdaf@ () (bindi (f) g)))))))
-
 
 Mini-Kanren: Conditionals
 -------------------------
 
-Two families of conditional constructs are provided -- *cond*-like
-constructs and *if*-like constructs.
+Four basic conditional constructs:
 
-Mini-Kanren: Conditionals: if\ :sup:`aux`
------------------------------------------
+.. class:: incremental
 
-::
+- if\ :sup:`e` -- each goal can succeed
+- if\ :sup:`i` -- each goal can succeed, output is interleaved
+- if\ :sup:`a` -- a single line, cf. soft-cut. only one goal can succeed
+- if\ :sup:`u` -- uni-. like if\ :sup:`a`, but the successful
+  *question* only succeeds once
 
-  (define-syntax ifaux
-    (syntax-rules ()
-      ((_ mplusfn g0 g1 g2)
-       (lambdag@ (s)
-         (mplusfn ((all g0 g1) s)
-                  (lambdaf@ () (g2 s)))))))
+.. class:: incremental
 
-Mini-Kanren: Conditionals: if\ :sup:`e` and if\ :sup:`i`
---------------------------------------------------------
-
-::
-
-  (define-syntax ife
-    (syntax-rules ()
-      ((_ g0 g1 g2)
-       (ifaux mplus g0 g1 g2))))
-
-  (define-syntax ifi
-    (syntax-rules ()
-      ((_ g0 g1 g2)
-       (ifaux mplusi g0 g1 g2))))
-
-
+We'll stick with if\ :sup:`e` first, and discuss the others in a bit
 
 List predicate (Scheme)
 -----------------------
@@ -183,9 +123,9 @@ List predicate (Kanren)
 
   (def list°
     (λ (l)
-      (if-e (null° l)
+      (ife (null° l)
         #s
-        (if-e (pair° l)
+        (ife (pair° l)
           (fresh° (d)
 	    (cdr° l d)
             (list° d))
@@ -201,11 +141,52 @@ Note the differences:
 - relations cannot be used as function arguments
 - relations return goals, not values
 
-Why Scala
----------
+Mini-Kanren: infinite goals
+---------------------------
 
-Pros
-~~~~
+::
+
+  (define any°
+    (λ (g)
+      (ife g #s
+           (any° g))))
+
+  (define always° (any° #s))
+  (define never°  (any° #u))
+
+
+
+An overview of Scala
+--------------------
+
+  Scala is a concise, elegant, type-safe programming language that
+  integrates object-oriented and functional features.\ [#]_
+
+
+.. [#] http://www.scala-lang.org/
+
+Scala: the name
+---------------
+
+  The name Scala stands for “scalable language.” The language is so
+  named because it was designed to grow with the demands of its
+  users. You can apply Scala to a wide range of programming tasks,
+  from writing small scripts to building large systems.\ [#]_
+
+.. [#] *Scala: A Scalable Language*, by Martin Odersky, Lex Spoon, and Bill Venners
+
+Scala: the authors
+------------------
+
+Scala is developed by the `LAMP group`_ at EPFL, led by Prof. Martin
+Odersky, who previously worked on `Pizza`_ and `Generic Java`_
+
+.. _LAMP group: http://lamp.epfl.ch/
+.. _Pizza: http://pizzacompiler.sourceforge.net/
+.. _Generic Java: http://www.cis.unisa.edu.au/~pizza/gj/
+
+Scala: Pros
+-----------
 
 .. class:: incremental
 
@@ -217,8 +198,8 @@ Pros
 - powerful type system
 
 
-Why Scala (cont.)
------------------
+Scala: Cons
+-----------
 
 Cons
 ~~~~
@@ -229,12 +210,8 @@ Cons
 - No macros
 - call-by-name provides same power (but not conciseness)
 
-Brief Tour of Scala
--------------------
-
-Objects
-~~~~~~~
-
+Scala: Objects
+--------------
 
 Objects serve two purposes:
 
@@ -247,8 +224,8 @@ Objects serve two purposes:
 
 Let's look at a concrete example
 
-Brief Tour of Scala
--------------------
+Scala: Objects (cont.)
+----------------------
 
 ::
 
@@ -264,26 +241,24 @@ Brief Tour of Scala
     } /* more code */
   }
 
-Brief Tour of Scala
--------------------
+Scala: REPL
+-----------
 
-REPL
-~~~~
+Scala provides a read-evaluate-print-loop interpreter, familiar to
+users of functional and scripting languages
 
 ::
 
-  $ scala
   scala> import info.hircus.kanren.MiniKanren._
   import info.hircus.kanren.MiniKanren._
 
-  scala> val v = make_var('hello)
   scala> val v = make_var('hello)
   v: info.hircus.kanren.MiniKanren.Var = Var('hello,0)
 
   scala> val w = make_var('hello)
   w: info.hircus.kanren.MiniKanren.Var = Var('hello,1)
 
-Brief Tour of Scala
+Scala: REPL (cont.)
 -------------------
 
 REPL
@@ -372,6 +347,144 @@ Scala: scalacheck examples
 
 The port
 --------
+
+The initial port was done over the course of several weeks; the current implementation is a rewrite\ [#]_. The initial implementation had a stack-overflow bug
+that was reëncountered during the rewrite, which I'll discuss in a bit.
+
+.. class:: incremental
+
+- better test coverage: using scalacheck
+- better use of Scala features
+- less "Scheme"-ish interface. e.g. use **if** instead of **cond**
+
+.. [#] original code is lost. moral story: backup (and share online...)
+
+mplus (Scheme)
+--------------
+
+::
+
+  (define mplus
+    (lambda (a-inf f)
+      (case-inf a-inf
+        (f) 
+        ((a) (choice a f))
+        ((a f0) (choice a 
+                  (lambdaf@ () (mplus (f0) f)))))))
+
+mplus (Scala)
+-------------
+
+::
+
+  def mplus(a_inf: Stream[Subst],
+            f: => Stream[Subst]): Stream[Subst] =
+    a_inf append f
+
+mplus\ :sup:`i` (Scheme)
+------------------------
+
+::
+
+  (define mplusi
+    (lambda (a-inf f)
+      (case-inf a-inf
+        (f) 
+        ((a) (choice a f))
+        ((a f0) (choice a 
+                  (lambdaf@ () (mplusi (f) f0)))))))
+
+
+mplus\ :sup:`i` (Scala)
+-----------------------
+
+::
+
+  def mplus_i(a_inf: Stream[Subst],
+            f: => Stream[Subst]): Stream[Subst] = a_inf match {
+    case Stream.empty => f
+    case Stream.cons(a, f0) => f0 match {
+      case Stream.empty => Stream.cons(a, f)
+      case _ => Stream.cons(a, mplus_i(f, f0))
+    }
+  }
+
+bind (Scheme)
+-------------
+
+::
+
+  (define bind
+    (lambda (a-inf g)
+      (case-inf a-inf
+        (mzero)
+        ((a) (g a))
+        ((a f) (mplus (g a)
+                 (lambdaf@ () (bind (f) g)))))))
+
+bind (Scala)
+------------
+
+::
+
+  def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
+    a_inf flatMap g
+
+
+bind\ :sup:`i` (Scheme)
+-----------------------
+
+::
+
+  (define bindi
+    (lambda (a-inf g)
+      (case-inf a-inf
+        (mzero)
+        ((a) (g a))
+        ((a f) (mplusi (g a)
+                 (lambdaf@ () (bindi (f) g)))))))
+
+bind\ :sup:`i` (Scala)
+----------------------
+
+::
+
+  def bind_i(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
+    a_inf match {
+      case Stream.empty => a_inf
+      case Stream.cons(a, f) => f match {
+        case Stream.empty => g(a)
+        case _ => mplus_i(g(a), bind(f, g))
+      }
+    }
+
+
+The port: Debugging
+-------------------
+
+.. class:: incremental
+
+- property specification allows for easy declaration of test cases
+- can stress-test individual functions, and narrow down possible culprits
+- stack overflow bug found in a combination of elimination and having comments
+
+The port: Debugging (cont.)
+---------------------------
+
+When computing with streams, eagerness is *bad*
+
+::
+
+  $ git diff 5bc7a839ae9db cc596e43b465c
+     /**
+  -   * While we could use call-by-name here,
+  -   * since the goals are functions anyway, delaying evaluation is
+  -   * unnecessary
+  ...
+  -  def if_e(g0: Goal, g1: Goal, g2: Goal): Goal = {
+  +  def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
+  ...
+
 
 
 The port: Downloads
