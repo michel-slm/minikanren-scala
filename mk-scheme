@@ -1,4 +1,5 @@
 #!/bin/sh
 pushd ${HOME}/checkouts/upstream/kanren/mini
-petite mybook.ss
+#petite mybook.ss
+petite mkprelude.scm
 popd
