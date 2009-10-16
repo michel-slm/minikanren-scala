@@ -6,9 +6,13 @@ all: src/${BASEDIR}/MiniKanren.scala
 check:
 	./check.sh
 
-apidoc:
+api:
 	mkdir -p api
 	scaladoc -d api src/${BASEDIR}/*.scala
 
 clean:
 	-rm -rf bin/*
+
+publish: api
+	make -C docs
+	./publish.sh

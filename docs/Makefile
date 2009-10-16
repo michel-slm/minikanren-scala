@@ -1,8 +1,8 @@
-presentation: presentation.rst
+all: presentation.html
+
+presentation.html: presentation.rst
 	rst2s5 presentation.rst presentation.html
 
 clean:
 	-rm -rf presentation.html ui
 
-publish: presentation
-	./publish.sh salimma@fedorapeople.org public_html/presentations/mk
