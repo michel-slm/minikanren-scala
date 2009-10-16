@@ -52,7 +52,7 @@ object SubstSpecification extends Properties("Substitution") {
    * contains as many bindings as there are unique variables
    */
   property("freshvarls") = forAll { (n: Int, ls: List[Int]) =>
-    import info.hircus.kanren.MKLib._
+    import info.hircus.kanren.Prelude._
 
     val vars = (n::ls) map { n: Int => make_var(Symbol(n.toString)) }
     val pvars = list2pair(vars).asInstanceOf[(Any,Any)]

@@ -31,7 +31,7 @@
 
 package info.hircus.kanren
 
-object MKLib {
+object Prelude {
   import info.hircus.kanren.MiniKanren._
 
   /**

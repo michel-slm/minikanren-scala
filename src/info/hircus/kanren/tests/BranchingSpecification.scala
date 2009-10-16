@@ -33,7 +33,7 @@ package info.hircus.kanren.tests
 
 import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
-import info.hircus.kanren.MKLib._
+import info.hircus.kanren.Prelude._
 
 object BranchingSpecification extends Properties("Branching") {
   import Prop.forAll
