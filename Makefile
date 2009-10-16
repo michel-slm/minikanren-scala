@@ -1,13 +1,13 @@
 BASEDIR=info/hircus/kanren
-all: src/${BASEDIR}/MiniKanren.scala
-	mkdir -p bin
+bin: src/${BASEDIR}/*.scala
+	$(shell [ -d bin ] && touch -m bin || mkdir -p bin)
 	scalac -d bin src/${BASEDIR}/*.scala src/${BASEDIR}/tests/*.scala
 
 check:
 	./check.sh
 
-api:
-	mkdir -p api
+api: src/${BASEDIR}/*.scala
+	$(shell [ -d api ] && touch -m api || mkdir -p api)
 	scaladoc -d api src/${BASEDIR}/*.scala
 
 clean:
