@@ -485,6 +485,33 @@ When computing with streams, eagerness is *bad*
   +  def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
   ...
 
+The port: Benchmarks
+--------------------
+
+::
+
+  > (time (run 1 (q) (palprod2 q)))
+  100001
+  101101
+  (time (run 1 ...))
+      315 collections
+      37916 ms elapsed cpu time, including 156 ms collecting
+      38858 ms elapsed real time, including 161 ms collecting
+      1330081488 bytes allocated, including 1325728560 bytes reclaimed
+  ((1 1 1 0 0 1 1 1 1 1 0 0 0 1))
+
+
+The port: Benchmarks
+--------------------
+
+::
+
+  scala> time(run(1,x)(palprod_o(x)))
+  100001
+  101101
+  Elapsed: 114344 ms
+  res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
+
 
 
 The port: Downloads

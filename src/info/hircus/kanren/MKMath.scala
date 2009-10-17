@@ -118,6 +118,12 @@ object MKMath {
     mkEqual((a,(ad,dd)), n)
   }
 
+
+  /**
+   * Holds if a is a digit (i.e. 0 to 9)
+   *
+   * @param a a bitlist number
+   */
   def digit_o(a: Any): Goal = {
     cond_e((mkEqual(a, build_num(0)), succeed),
 	   (mkEqual(a, build_num(1)), succeed),
@@ -131,6 +137,62 @@ object MKMath {
 	   (mkEqual(a, build_num(9)), succeed))
   }
 
+  /**
+   * Holds if both n and m are zero
+   * or if floor(log2(n)) == floor(log2(m))
+   *
+   * @param n a bitlist number
+   * @param m a bitlist number
+   */
+  def eq_len_o(n: Any, m: Any): Goal = {
+    if_e(mkEqual(Nil, n), mkEqual(Nil, m),
+	 eq_len_o_aux(n, m))
+  }
+
+  private def eq_len_o_aux(n: Any, m: Any): Goal = {
+    if_e(mkEqual((1,Nil), n), mkEqual((1,Nil), m),
+	 { s: Subst => {
+	   val x  = make_var('x)
+	   val y  = make_var('y)
+	   val any1  = make_var('any1)
+	   val any2 = make_var('any2)
+	   all(mkEqual((any1,x), n), pos_o(x),
+	       mkEqual((any2,y), m), pos_o(y),
+	       eq_len_o_aux(x,y))(s)
+	 } })
+  }
+
+  def lt_len_o(n: Any, m: Any): Goal = {
+    if_e(mkEqual(Nil,n), pos_o(m),
+	 if_e(mkEqual((1,Nil),n), gt1_o(m),
+	      { s: Subst => {
+		val a = make_var('a)
+		val x = make_var('x)
+		val b = make_var('b)
+		val y = make_var('y)
+
+		all(mkEqual((a,x),n), pos_o(x),
+		    mkEqual((b,y),m), pos_o(y),
+		    lt_len_o(x,y))(s)
+	      } }))
+  }
+
+  /**
+   * Holds if n < m
+   *
+   * @param n a bitlist number
+   * @param m a bitlist number
+   */
+  def lt_o(n: Any, m: Any): Goal = {
+   cond_i((lt_len_o(n,m), succeed),
+	  (eq_len_o(n,m),
+	   { s: Subst => {
+	     val x = make_var('x)
+	     both(pos_o(x), add_o(n, x, m))(s)
+	   } }))
+  }
+  
+  /* Math operations */
   def gen_adder_o(d:Any, n: Any, m: Any, r: Any): Goal = {
     val a = make_var('a)
     val b = make_var('b)

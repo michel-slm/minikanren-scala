@@ -69,6 +69,32 @@ object MathSpecification extends Properties("Math") {
     ((run(-1, x)(digit_o(x))) map read_num _) == ((0 until 10) toList)
   }
 
+  private def floor_log2(n: Double) = {
+    Math.floor(Math.log(n) / Math.log(2))
+  }
+
+  property("=lo") = forAll(Gen.choose(1, MAX_INT)) { n => {
+    val bn = build_num(n)
+    val m = n << 1
+    val bm = build_num(m)
+    (floor_log2(n) == floor_log2(m)) == (run(-1, x)(eq_len_o(bn, bm)) != Nil)
+
+  } }
+
+  property("<lo") = forAll(pairGen(0, 20)) { p => p match {
+    case (n,m) => {
+      val x = (Math.exp(n) toInt)
+      val y = (Math.exp(m) toInt)
+      (floor_log2(x) < floor_log2(y) ==
+	(run(-1, s)(lt_len_o(build_num(x),
+			     build_num(y))) != Nil) ) }
+  } }
+
+  property("<o") = forAll(pairGen(MIN_INT, MAX_INT)) { p => p match {
+    case (n,m) =>
+      (n < m) == (run(-1, x)(lt_o(build_num(n), build_num(m))) != Nil)
+  } }
+
   property("half-adder-o") = {
     ((run(-1, s)(both(half_adder_o(x,y,r,c),
                      mkEqual(list2pair(List(x,y,r,c)), s))) map pair2list _ )

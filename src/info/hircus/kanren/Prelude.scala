@@ -34,6 +34,14 @@ package info.hircus.kanren
 object Prelude {
   import info.hircus.kanren.MiniKanren._
 
+  /* Control operators */
+  def once(g: Goal): Goal = {
+    if_u(g, succeed,
+	 fail)
+  }
+
+  /* Lists */
+
   /**
    * Utility function to convert a Scala linked list to a
    * pair that is more digestible
@@ -58,6 +66,7 @@ object Prelude {
     case (h, tl) => h :: pair2list(tl)
   }
 
+  
   /**
    * A relation unifying the head of the pair 'p' with 'a'
    *

@@ -271,20 +271,37 @@ object MiniKanren {
    * @param altg    The alternate goal. Call-by-name as otherwise, in a situation with many nested if_e
    *   (e.g. using any_o), the stack overflows.
    */
-  def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
+  def if_e(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst =>
       mplus(both(testg, conseqg)(s),
 	    altg(s))
   }
 
-  def if_i(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
+  def if_i(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst =>
       mplus_i(both(testg, conseqg)(s),
 	    altg(s))
   }
 
-  def cond_aux(ifer: (Goal, Goal, =>Goal) => Goal)(gs: (Goal,Goal)*): Goal = {
-    gs.toList match {
+  def if_a(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
+    s: Subst => {
+      val s_inf = testg(s)
+      s_inf match {
+	case Stream.empty => altg(s)
+	case Stream.cons(s_1, s_inf_1) => s_inf_1 match {
+	  case Stream.empty => conseqg(s_1)
+	  case _ => bind(s_inf, conseqg) } }
+    } }
+
+  def if_u(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
+    s: Subst => {
+      testg(s) match {
+	case Stream.empty => altg(s)
+	case Stream.cons(s_1, s_inf) => conseqg(s_1) }
+    } }
+
+  def cond_aux(ifer: (Goal, =>Goal, =>Goal) => Goal)(gs: (Goal,Goal)*): Goal =
+    { gs.toList match {
       case Nil => fail
       case (g0, g1) :: gs2 => gs2 match {
 	case Nil => both(g0, g1)
@@ -294,8 +311,8 @@ object MiniKanren {
 
   def cond_e = cond_aux(if_e _) _
   def cond_i = cond_aux(if_i _) _
-
-  
+  def cond_a = cond_aux(if_a _) _
+  def cond_u = cond_aux(if_u _) _
 
   def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
     unify(t1, t2, s) match {
