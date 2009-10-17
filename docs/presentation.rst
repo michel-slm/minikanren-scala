@@ -9,6 +9,16 @@ Porting the Mini-Kanren logic system to Scala
    :alt:    Creative Commons License
    :align:  center
 
+Navigation
+----------
+
+* Use arrow keys, PgUp/PgDn, and mouse clicks to navigate
+* Press "**C**" for controls, and click the "|mode|" button to switch
+  between presentation and handout/outline modes
+
+.. |mode| unicode:: U+00D8 .. capital o with stroke
+
+
 Abstract
 --------
 
@@ -42,10 +52,7 @@ tend not to be exposed to the field -- in most cases, students are
 first exposed to procedural, then object-oriented, then functional
 languages\ [*]_.
 
-.. [Colmerauer92] *The birth of Prolog*, Colmerauer and Russell, 1992
-
-.. class:: incremental
-
+.. [Colmerauer92] *The birth of Prolog*, Colmerauer and Roussel, 1992
 .. [*] If they are (un)lucky, functional comes first
 
 
@@ -91,15 +98,15 @@ Four basic conditional constructs:
 
 .. class:: incremental
 
-- if\ :sup:`e` -- each goal can succeed
-- if\ :sup:`i` -- each goal can succeed, output is interleaved
-- if\ :sup:`a` -- a single line, cf. soft-cut. only one goal can succeed
-- if\ :sup:`u` -- uni-. like if\ :sup:`a`, but the successful
+- cond\ :sup:`e` -- each goal can succeed
+- cond\ :sup:`i` -- each goal can succeed, output is interleaved
+- cond\ :sup:`a` -- a single line, cf. soft-cut. only one goal can succeed
+- cond\ :sup:`u` -- uni-. like cond\ :sup:`a`, but the successful
   *question* only succeeds once
 
 .. class:: incremental
 
-We'll stick with if\ :sup:`e` first, and discuss the others in a bit
+We'll stick with cond\ :sup:`e` first, and discuss the others in a bit
 
 List predicate (Scheme)
 -----------------------
@@ -107,11 +114,11 @@ List predicate (Scheme)
 
   (def list?
     (λ (l)
-      (if (null? l)
-        #t
-        (if (pair? l)
-          (list? (cdr l))
-          #f))))
+      (cond
+       ((null? l))
+       ((pair? l)
+        (list? (cdr l)))
+       (else #f))))
 
 A list is either an empty list, or a pair whose tail is a list
 
@@ -123,22 +130,23 @@ List predicate (Kanren)
 
   (def list°
     (λ (l)
-      (ife (null° l)
-        #s
-        (ife (pair° l)
-          (fresh° (d)
-	    (cdr° l d)
-            (list° d))
-          #u))))
+      (conde
+       ((null° l))
+       ((pair° l)
+        (fresh (d)
+	  (cdr° l d)
+          (list° d)))
+       (else #u))))
 
 List predicates
 ---------------
 
 Note the differences:
 
-- if\ :sup:`e` instead of if
+- cond\ :sup:`e` instead of cond
 - cdr\ :sup:`o` instead of cdr
-- relations cannot be used as function arguments
+- relations cannot be nested
+- non-boolean relations take an extra argument
 - relations return goals, not values
 
 Mini-Kanren: infinite goals
@@ -457,6 +465,121 @@ bind\ :sup:`i` (Scala)
         case _ => mplus_i(g(a), bind(f, g))
       }
     }
+
+The port: Macros
+----------------
+
+Most macros in the original code can be completely replaced by functions, apart
+from the ones that introduce new names
+
+The port: Macros: run
+---------------------
+
+::
+
+  (define-syntax run
+    (syntax-rules ()
+      ((_ n^ (x) g ...)
+       (let ((n n^) (x (var x)))
+         (if (or (not n) (> n 0))
+	   (map-inf n
+	     (lambda (s)
+	       (reify (walk* x s)))
+	     ((all g ...) empty-s))
+	   ())))))
+
+The port: Macros: Run
+---------------------
+
+::
+
+    def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = {
+      val g = gs.toList match {
+        case Nil => g0
+	case gls => all((g0::gls): _*)
+      }
+      val allres = g(empty_s)  map {s: Subst => reify(walk_*(v, s)) }
+      (if (n < 0) allres else (allres take n)) toList
+    }
+
+.. class:: handout
+
+  - *v* must be already defined
+  - We use the **map** method of a stream, which produces a lazy stream
+  - It's not idiomatic outside Lisp to have functions that take either #f or some other type.
+    Instead, a negative number is used to collect all results
+
+The port: Macros: fresh
+-----------------------
+
+::
+
+  (def list°
+    (λ (l)
+      (conde
+       ((null° l))
+       ((pair° l)
+        (fresh (d)
+	  (cdr° l d)
+          (list° d))))))
+
+.. class:: incremental
+
+This differs slightly from the first appearance of *list°*: the (else #u) line is removed,
+as cond\ :sup:`e` fails by default
+
+The port: Macros: fresh
+-----------------------
+
+::
+
+  def list_o(l: Any): Goal = {
+    cond_e((null_o(l), succeed),
+           (pair_o(l), { s: Subst => {
+                         val d = make_var('d)
+                         both(cdr_o(l, d), list_o(d))(s) } }))
+  }
+
+.. class:: incremental
+
+- unlike a macro, *cond_e* is evaluated at runtime.
+- each line is required to have strictly 2 goals (thus **succeed** is inserted)
+- the **fresh** goal is replaced by a closure. Note *s* is passed to **both**
+
+The port: Macros: project
+-------------------------
+
+::
+
+  >  (run 2 (x)
+       (conde
+        ((== x 7)  (project (x) (begin (printf "~s~n" x) succeed)))
+        ((== x 42) (project (x) (begin (printf "~s~n" x) fail)))))
+  7
+  42
+  (7)
+
+.. class:: handout
+
+  - within the body of the projection, the logic variable *x* is replaced by its bound value
+  - cond\ :sup:`e` successively bind *x* to 7 and 42
+  - the second **project** expression fails after printing 42, thus 42 is not in the result list
+
+
+The port: Macros: project
+-------------------------
+
+::
+
+  run(2, x)(cond_e((mkEqual(x,7), { s: Subst => {
+                                    val x1 = walk_*(x, s)
+                                    println(x1)
+				    succeed(s) }}),
+		   (mkEqual(x,42), { s: Subst => {
+                                     val x1 = walk_*(x, s)
+                                     println(x1)
+				     fail(s) }})))
+	    
 
 
 The port: Debugging
