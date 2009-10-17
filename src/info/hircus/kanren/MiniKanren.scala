@@ -333,7 +333,11 @@ object MiniKanren {
 
   /* produce at most n results
    */
-  def run(n: Int, v: Var)(g: Goal) = {
+  def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = {
+    val g = gs.toList match {
+      case Nil => g0
+      case gls => all((g0::gls): _*)
+    }
     val allres = g(empty_s)  map {s: Subst => reify(walk_*(v, s)) }
     (if (n < 0) allres else (allres take n)) toList
   }
