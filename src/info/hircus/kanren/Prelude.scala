@@ -31,6 +31,11 @@
 
 package info.hircus.kanren
 
+/***
+ * The standard library for Mini Kanren
+ * Currently contains all but mathematical operators, which are in
+ * MKMath
+ */
 object Prelude {
   import info.hircus.kanren.MiniKanren._
 

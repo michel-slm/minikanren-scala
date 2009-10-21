@@ -31,10 +31,21 @@
 
 package info.hircus.kanren
 
+/**
+ * Mini Kanren math relations
+ * This will be merged with Prelude once all operations are implemented
+ */
 object MKMath {
   import info.hircus.kanren.MiniKanren._
   import info.hircus.kanren.Prelude._
 
+  /**
+   * (x XOR y) === r
+   *
+   * @param x a bit
+   * @param y a bit
+   * @param r a bit
+   */
   def bit_xor_o(x: Any, y: Any, r: Any): Goal = {
     if_e(both(mkEqual(0,x), mkEqual(0,y)), mkEqual(0,r),
 	 if_e(both(mkEqual(1,x), mkEqual(0,y)), mkEqual(1,r),
@@ -42,6 +53,13 @@ object MKMath {
 		   if_e(both(mkEqual(1,x), mkEqual(1,y)), mkEqual(0,r),
 			fail)))) }
 
+  /**
+   * (x AND y) === r
+   *
+   * @param x a bit
+   * @param y a bit
+   * @param r a bit
+   */
   def bit_and_o(x: Any, y: Any, r: Any): Goal = {
     if_e(both(mkEqual(0,x), mkEqual(0,y)), mkEqual(0,r),
 	 if_e(both(mkEqual(1,x), mkEqual(0,y)), mkEqual(0,r),
@@ -81,12 +99,23 @@ object MKMath {
 	bit_xor_o(xy,wz,c))
   }
 
-
+  /**
+   * Build a Kanren number from an integer
+   *
+   * @param n an integer
+   * @return a Kanren number
+   */
   def build_num(n: Int): Any = {
     if (n==0) Nil
     else ( (n%2), build_num(n >> 1) )
   }
 
+  /**
+   * Read a Kanren number as an integer
+   *
+   * @param  n a Kanren number
+   * @return an integer
+   */
   def read_num(n: Any): Int = n match {
     case Nil => 0
     case (x, p) => x.asInstanceOf[Int] + (read_num(p) << 1)
@@ -228,7 +257,22 @@ object MKMath {
 					    fail))))))))
   }
 
+  /**
+   * (n + m) === k
+   *
+   * @param n a Kanren number
+   * @param m a Kanren number
+   * @param k a Kanren number
+   */
   def add_o(n: Any, m: Any, k: Any): Goal = adder_o(0, n, m, k)
+
+  /**
+   * (n - m) === k
+   *
+   * @param n a Kanren number
+   * @param m a Kanren number
+   * @param k a Kanren number
+   */
   def sub_o(n: Any, m: Any, k: Any): Goal = adder_o(0, m, k, n)
 
   /* Multiplication */
