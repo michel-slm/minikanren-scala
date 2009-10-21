@@ -79,5 +79,8 @@ object UnifySpecification extends Properties("Unification") {
   property("=/= #1") = forAll { n:Int =>
     crun(-1, v)(v =/= n, v === n) == Nil }
 
+  property("=/= #2") = forAll { n:Int =>
+    crun(-1, v)(v =/= n, w === n, v === w) == Nil }
+
 }
 
