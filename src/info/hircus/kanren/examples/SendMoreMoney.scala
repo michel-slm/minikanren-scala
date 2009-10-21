@@ -32,13 +32,15 @@
 package info.hircus.kanren.examples
 
 /**
- * The send-more-money puzzle
- * from upstream's send-more-money.scm
+ * The send-more-money puzzle<br>
+ * from upstream's send-more-money.scm<br>
  *
+ *<pre>
  *   S E N D
  *   M O R E
  * ---------
  * M O N E Y
+ *</pre>
  */
 object SendMoreMoney {
   import info.hircus.kanren.MiniKanren._

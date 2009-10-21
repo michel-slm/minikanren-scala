@@ -31,6 +31,13 @@
 
 package info.hircus.kanren.examples
 
+/**
+ * <p>Finds palindromic six-digit numbers that are the product of two
+ * three-digit numbers.</p>
+ * 
+ * <p>This is a good stress test for the arithmetic implementation:
+ * <tt>time(run(1,x)(palprod_o(x)))</tt> takes > 40s on a Core 2 Duo 2 GHz</p>
+ */
 object PalProd {
   import info.hircus.kanren.MiniKanren._
   import info.hircus.kanren.Prelude._
@@ -52,7 +59,7 @@ object PalProd {
    * Palindrome products:
    *
    * Find all six-digit palindromic numbers that are the product of
-   * two three-digit numbers
+   * two three-digit numbers. The answers are printed to the console.
    *
    * @param q a fresh logic variable. Ignore the result
    */

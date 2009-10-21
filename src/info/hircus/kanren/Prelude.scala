@@ -32,7 +32,7 @@
 package info.hircus.kanren
 
 /***
- * The standard library for Mini Kanren
+ * The standard library for Mini Kanren.<br>
  * Currently contains all but mathematical operators, which are in
  * MKMath
  */
@@ -115,7 +115,7 @@ object Prelude {
   }
 
   /**
-   * A relation that unifies l with a Kanren list
+   * A relation that unifies l with a Kanren list.<br>
    * If l is fresh, this is actually a list generator
    *
    * @param l something list-able
@@ -148,9 +148,9 @@ object Prelude {
 	       append_o(l11, l2, l31))(s) } })
 
   /**
-   * A relation that unifies 'x' with an element from 'l'
-   * If x is fresh, collecting all results  yield all the elements of l
-   * If 'l' is fresh, generates all possible lists containing 'x'
+   * A relation that unifies 'x' with an element from 'l'.<br>
+   * If x is fresh, collecting all results  yield all the elements of l<br>
+   * If 'l' is fresh, generates all possible lists containing 'x'<br>
    * Otherwise, the only possible result is if 'x' matches an element in 'l'
    *
    * @param x any
@@ -175,13 +175,13 @@ object Prelude {
   def any_o(g: Goal): Goal = if_e(g, succeed, any_o(g))
 
   /**
-   * Bottom: this is a goal that never terminates if evaluated
+   * Bottom: this is a goal that never terminates if evaluated<br>
    * see page 77 of Reasoned Schemer
    */
   def never_o: Goal = any_o(fail)
 
   /**
-   * Always: a goal that can succeed an infinite number of times
+   * Always: a goal that can succeed an infinite number of times<br>
    * see page 77-78 of Reasoned Schemer
    */
   def always_o: Goal = any_o(succeed)

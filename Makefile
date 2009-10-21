@@ -13,10 +13,10 @@ bin/${BASEDIR}/examples: bin src/${BASEDIR}/examples/*.scala
 check: 
 	./check.sh
 
-api: src/${BASEDIR}/*.scala
+api: src/${BASEDIR}/*.scala src/${BASEDIR}/examples/*.scala
 	$(shell [ -d api ] && touch -m api || mkdir -p api)
 	scaladoc -doctitle ${TITLE} -windowtitle ${TITLE} -d api \
-	src/${BASEDIR}/*.scala
+	src/${BASEDIR}/*.scala src/${BASEDIR}/examples/*.scala
 
 clean:
 	-rm -rf api bin

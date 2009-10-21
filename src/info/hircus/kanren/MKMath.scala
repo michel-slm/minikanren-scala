@@ -32,7 +32,7 @@
 package info.hircus.kanren
 
 /**
- * Mini Kanren math relations
+ * Mini Kanren math relations.<br>
  * This will be merged with Prelude once all operations are implemented
  */
 object MKMath {
