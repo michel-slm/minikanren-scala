@@ -60,10 +60,10 @@ object MathSpecification extends Properties("Math") {
   val c = make_var('c) // carry
   val s = make_var('s) // sum
   
-  property("bit-xor-o 0") = run(-1, s)(both(bit_xor_o(x,y,0), mkEqual((x,y), s))) == List((0,0),(1,1))
-  property("bit-xor-o 1") = run(-1, s)(both(bit_xor_o(x,y,1), mkEqual((x,y), s))) == List((1,0),(0,1))
-  property("bit-and-o 0") = run(-1, s)(both(bit_and_o(x,y,0), mkEqual((x,y), s))) == List((0,0),(1,0),(0,1))
-  property("bit-and-o 1") = run(-1, s)(both(bit_and_o(x,y,1), mkEqual((x,y), s))) == List((1,1))
+  property("bit-xor-o 0") = run(-1, s)(both(bit_xor_o(x,y,0), (x,y) === s)) == List((0,0),(1,1))
+  property("bit-xor-o 1") = run(-1, s)(both(bit_xor_o(x,y,1), (x,y) === s)) == List((1,0),(0,1))
+  property("bit-and-o 0") = run(-1, s)(both(bit_and_o(x,y,0), (x,y) === s)) == List((0,0),(1,0),(0,1))
+  property("bit-and-o 1") = run(-1, s)(both(bit_and_o(x,y,1), (x,y) === s)) == List((1,1))
 
   property("digit-o") = {
     ((run(-1, x)(digit_o(x))) map read_num _) == ((0 until 10) toList)
@@ -97,7 +97,7 @@ object MathSpecification extends Properties("Math") {
 
   property("half-adder-o") = {
     ((run(-1, s)(both(half_adder_o(x,y,r,c),
-                     mkEqual(list2pair(List(x,y,r,c)), s))) map pair2list _ )
+                     list2pair(List(x,y,r,c)) === s)) map pair2list _ )
      ==
        List(List(0,0,0,0),
             List(1,0,1,0),
@@ -106,7 +106,7 @@ object MathSpecification extends Properties("Math") {
 
   property("full-adder-o") = {
     ((run(-1, s)(both(full_adder_o(b,x,y,r,c),
-                      mkEqual(list2pair(List(b,x,y,r,c)), s))) map pair2list _ )
+                      list2pair(List(b,x,y,r,c)) === s)) map pair2list _ )
      ==
        List(List(0,0,0,0,0),
             List(1,0,0,1,0),
@@ -117,14 +117,13 @@ object MathSpecification extends Properties("Math") {
             List(0,1,1,0,1),
             List(1,1,1,1,1)) ) }
 
-  property("gen-adder-o") = {
-    ((run(-1,s)(gen_adder_o(1, list2pair(List(0,1,1)),
-                          list2pair(List(1,1)), s))) map pair2list _) == List(List(0,1,0,1))
-  }
+  property("gen-adder-o") =
+    ( (run(-1,s)(gen_adder_o(1, list2pair(List(0,1,1)),
+                             list2pair(List(1,1)), s))) map pair2list _) == List(List(0,1,0,1))
 
   property("adder-o") = {
     val res = ((run(-1, s)(both(adder_o(0, x, y, list2pair(List(1,0,1))),
-                               mkEqual((x,(y,Nil)), s)))) map pair2list _ )
+                               (x,(y,Nil)) === s))) map pair2list _ )
     ( (res map { l: List[Any] => l map pair2list _ } )
      ==
        List(List(List(1,0,1), Nil),

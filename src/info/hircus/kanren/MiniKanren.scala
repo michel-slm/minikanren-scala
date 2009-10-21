@@ -314,6 +314,12 @@ object MiniKanren {
   def cond_a = cond_aux(if_a _) _
   def cond_u = cond_aux(if_u _) _
 
+  class Unifiable(a: Any) {
+    def ===(b: Any): Goal = mkEqual(a, b)
+  }
+
+  implicit def unifiable(a: Any) = new Unifiable(a)
+
   def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
     unify(t1, t2, s) match {
       case Some(s2) => succeed(s2)

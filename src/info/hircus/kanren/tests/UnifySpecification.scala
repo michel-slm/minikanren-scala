@@ -71,7 +71,7 @@ object UnifySpecification extends Properties("Unification") {
 
   property("pairs") = forAll { (m:Int, n: Int) =>
     def pairGoal: Goal =
-      mkEqual((v, w), (m, n))
+      (v, w) === (m, n)
     
     run(-1, v)(pairGoal) == List(m) &&
     run(-1, w)(pairGoal) == List(n) }

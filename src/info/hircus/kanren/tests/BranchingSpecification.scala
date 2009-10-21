@@ -44,25 +44,25 @@ object BranchingSpecification extends Properties("Branching") {
   property("fail-then-never") = run(1, v)(all(fail, never_o)) == Nil
 
   property("always-first") =
-    run(5, v)(all(always_o, mkEqual(true, v))) == (
+    run(5, v)(all(always_o, true === v)) == (
       (for { x <- 0 until 5 } yield true) toList )
 
   property("always-second") =
-    run(5, v)(all(mkEqual(true, v), always_o)) == (
+    run(5, v)(all(true === v, always_o)) == (
       (for { x <- 0 until 5 } yield true) toList )
 
     
   property("cond_i #1") =
-    run(5, v)(both(if_i(mkEqual(false, v), always_o,
-			if_i(mkEqual(true, v), always_o,
+    run(5, v)(both(if_i(false === v, always_o,
+			if_i(true === v, always_o,
 			     fail)),
-		   mkEqual(true, v))) == ( (for { x <- 0 until 5 } yield true) toList )
+		   true === v)) == ( (for { x <- 0 until 5 } yield true) toList )
 
   property("cond_i #2") =
-    run(5, v)(both(all_i(if_e(mkEqual(false, v), succeed,
-			      mkEqual(true, v)),
+    run(5, v)(both(all_i(if_e(false === v, succeed,
+			      true === v),
 			 always_o),
-		   mkEqual(true, v))) == (
+		   true === v)) == (
 		     (for { x <- 0 until 5 } yield true) toList )
 
 }

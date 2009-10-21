@@ -42,28 +42,28 @@ object RunSpecification extends Properties("Run") {
   val w = make_var('w)
   
   property("==") = forAll { n: Int =>
-    run(1, v)(mkEqual(v, n)) == List(n)
+    run(1, v)(v === n) == List(n)
   }
 
   property("==*") = forAll { n: Int =>
-    run(-1, v)(mkEqual(v, n)) == List(n)
+    run(-1, v)(v === n) == List(n)
   }
 
   property("all0") = run(-1, v)(all()) == List(Symbol("_.0"))
-  property("all1") = forAll { n: Int => run(-1, v)(all(mkEqual(v, n))) == List(n) }
+  property("all1") = forAll { n: Int => run(-1, v)(all(v === n)) == List(n) }
   property("all*") = forAll { (m: Int, n: Int) =>
     (m==n ||
-     run(-1, v)(all(mkEqual(v, n), mkEqual(w, m))) == List(n))
+     run(-1, v)(all(v === n, w === m)) == List(n))
   }
 
   property("all-any") = forAll { (m: Int, n: Int) =>
     m==n ||
-    (run(-1, v)(all(mkEqual(v, n), any_e(mkEqual(v, m), mkEqual(v, n)))) 
+    (run(-1, v)(all(v === n, any_e(v === m, v === n)))
      == List(n)) }
 
   property("ife") = forAll { (m: Int, n: Int) =>
-    run(-1, v)(if_e(mkEqual(v, m), succeed,
-		    mkEqual(v, n))) == List(m, n) }
+    run(-1, v)(if_e(v === m, succeed,
+		    v === n)) == List(m, n) }
 
   property("null") = forAll { n: Int =>
     val x = make_var('x)
