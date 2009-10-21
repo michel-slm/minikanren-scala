@@ -1,0 +1,53 @@
+Never Equals
+============
+
+This document describes the inequality constraint "never equals".
+
+To implement this, our idea of a substitution needs to be extended, so
+that instead of a single mapping, we have two mappings:
+- a mapping from logic vars to their bindings
+- another mapping from logic vars to things they must *not* equal
+
+Plan
+----
+
+As there is a cost to checking inequality constraints (both CPU and memory),
+it would be desirable to be able to turn off this feature.
+
+The first step is therefore to restructure the code as follows:
+- start a new Git branch for this work
+- make Substitution be a trait (cf. Haskell typeclasses)
+- lookup is now a method of the trait
+- write a simple implementation of this trait
+- verify that performance (on e.g. palprod) is not impacted
+- re-merge with master
+- now write a second trait that provides the neverEq construct
+- implement this trait
+
+Semantics
+---------
+
+neverEq
+~~~~~~~
+
+First, walk the two inputs. then:
+
+- simplest case: neverEq(val1, val2)
+  (val1 == val2) match {
+    case true  => fail
+    case false => succeed
+  }
+
+- next: neverEq(var1, val2) (also val1, var2)
+  - extend the substitution's constraints with var1 =/= val2
+
+- next: neverEq(var1, var2)
+  extend the constraints as such:
+  - to the inequality constraints for var1, add var2
+  - to that for var2, add var1
+
+mkEq
+~~~~
+
+Perform Eq as before, but check if the result breaks any of the existing
+constraints
