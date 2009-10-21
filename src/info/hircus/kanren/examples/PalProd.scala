@@ -29,9 +29,9 @@
  * SUCH DAMAGE.
  */
 
-package info.hircus.kanren
+package info.hircus.kanren.examples
 
-object Examples {
+object PalProd {
   import info.hircus.kanren.MiniKanren._
   import info.hircus.kanren.Prelude._
   import info.hircus.kanren.MKMath._
