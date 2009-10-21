@@ -61,8 +61,8 @@ object SubstSpecification extends Properties("Substitution") {
     
     val unique_vars = remove_right_dups(vars)
     
-    ( (s.toList == reify_s(pvars._2,
-			   reify_s(pvars._1, empty_s)).toList) &&
+    ( (s  == reify_s(pvars._2,
+			   reify_s(pvars._1, empty_s))) &&
      unique_vars.length == s.length &&
      pair2list(walk_*(list2pair(unique_vars), s)) ==
        ((0 until s.length) map { reify_name(_) } toList) )

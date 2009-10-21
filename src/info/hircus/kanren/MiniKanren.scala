@@ -52,17 +52,6 @@ object MiniKanren {
   type Binding = (Var, Any)
 
   /* Substitution */
-  type Subst = List[Binding]
-  val empty_s = Nil
-
-  def ext_s(v: Var, x: Any, s: Subst): Subst = (v, x) :: s
-
-  def lookup(v: Any, s: List[(Any,Any)]): Option[Any] =
-    s match {
-      case Nil => None
-      case (v1, x: Any) :: s2 => if (v==v1) Some(x) else lookup(v, s2)
-    }
-
   type Goal = (Subst) => Stream[Subst]
   def pairp(x: Any): Boolean =
     x.isInstanceOf[(Any,Any)]
@@ -84,7 +73,7 @@ object MiniKanren {
 */
 
   def walk(v: Any, s: Subst): Any =
-    if (v.isInstanceOf[Var]) lookup(v, s) match {
+    if (v.isInstanceOf[Var]) s.lookup(v.asInstanceOf[Var]) match {
       case Some(x) => walk(x, s)
       case None => v
     } else v
@@ -129,7 +118,7 @@ object MiniKanren {
   
   def reify_s(v: Any, s: Subst): Subst= {
     val v1 = walk(v, s)
-    if (v1.isInstanceOf[Var]) ext_s(v1.asInstanceOf[Var], reify_name(s.length), s)
+    if (v1.isInstanceOf[Var]) s.extend(v1.asInstanceOf[Var], reify_name(s.length))
     else if (pairp(v1)) {
       val ls = v1.asInstanceOf[(Any,Any)]
       reify_s(ls._2, reify_s(ls._1, s))
@@ -148,9 +137,9 @@ object MiniKanren {
 
     if (t1 == t2) return Some(s)
     else if (t1.isInstanceOf[Var])
-      return Some(ext_s(t1.asInstanceOf[Var], t2, s))
+      return Some(s.extend(t1.asInstanceOf[Var], t2))
     else if (t2.isInstanceOf[Var])
-      return Some(ext_s(t2.asInstanceOf[Var], t1, s))
+      return Some(s.extend(t2.asInstanceOf[Var], t1))
     else if (pairp(t1) && pairp(t2)) {
       val ls1 = t1.asInstanceOf[(Any,Any)]
       val ls2 = t2.asInstanceOf[(Any,Any)]

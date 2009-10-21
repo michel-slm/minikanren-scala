@@ -1,0 +1,19 @@
+With new substitution:
+
+scala> time(run(1,x)(palprod_o(x)))
+100001
+101101
+Elapsed: 47833 ms
+res0: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List())))))))))))))))
+
+scala> time(run(1,x)(palprod_o(x)))
+100001
+101101
+Elapsed: 44813 ms
+res1: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List())))))))))))))))
+
+scala> time(run(1,x)(palprod_o(x)))
+100001
+101101
+Elapsed: 44277 ms
+res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List())))))))))))))))

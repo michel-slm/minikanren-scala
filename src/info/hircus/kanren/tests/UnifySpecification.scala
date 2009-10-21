@@ -50,7 +50,7 @@ object UnifySpecification extends Properties("Unification") {
     val v = make_var('v)
     (for {
       s <- unify(v, n, empty_s)
-      res <- lookup(v, s)
+      res <- s.lookup(v)
     } yield res)  match {
       case Some(x) => x == n
       case None => false
@@ -62,7 +62,7 @@ object UnifySpecification extends Properties("Unification") {
     (for {
       s1 <- unify(v, m, empty_s)
       s2 <- unify(v, n, s1)
-      res <- lookup(v, s2)
+      res <- s2.lookup(v)
     } yield res) match {
       case Some(_) => m==n
       case None => true
