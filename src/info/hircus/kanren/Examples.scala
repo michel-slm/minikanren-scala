@@ -36,7 +36,7 @@ object Examples {
   import info.hircus.kanren.Prelude._
   import info.hircus.kanren.MKMath._
 
-  def add_len_o(a: Any, b: Any, c: Any): Goal = {
+  private def add_len_o(a: Any, b: Any, c: Any): Goal = {
     val a1 = make_var('a1)
     val ar = make_var('ar)
     val c1 = make_var('c1)
@@ -48,6 +48,14 @@ object Examples {
 	      fail))
   }
 
+  /**
+   * Palindrome products:
+   *
+   * Find all six-digit palindromic numbers that are the product of
+   * two three-digit numbers
+   *
+   * @param q a fresh logic variable. Ignore the result
+   */
   def palprod_o(q: Any): Goal = {
     val a = make_var('a)
     val a9091 = make_var('a9091)
