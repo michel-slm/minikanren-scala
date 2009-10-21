@@ -71,9 +71,9 @@ several classes of IU computer science students.
 Mini-Kanren: Substitution
 -------------------------
 
-A *substitution* is a mapping from logical variables to values\
+A *substitution* is a set of mappings from logical variables to values\
 [#]_. It is immutable; extending a substitution with a new key-value
-pair produces a new substitution, with the old substitution remaining
+mapping produces a new substitution, with the old substitution remaining
 unchanged\ [#]_.
 
 .. [#] including logical variables
@@ -206,11 +206,43 @@ Scala: Pros
 - powerful type system
 
 
-Scala: Cons
------------
+Scala: Tail-Call Optimization
+-----------------------------
 
-Cons
-~~~~
+.. class:: incremental
+
+- function calls in tail position should not grow call stack
+- JVM does not have tailcall instruction
+- JVM functional languages work around this to differing extents
+
+Scala: TCO: self-recursion
+--------------------------
+
+This is safe:
+
+::
+
+  def even_or_odd(check_even: Boolean, n: Int) = n match {
+    case 0 => check_even
+    case _ => even_or_odd(!check_even, n-1)
+  }
+
+Scala: TCO: mutual recursion
+----------------------------
+
+This is not:
+
+::
+
+  def is_even(n: Int) = n match {
+    case 0 => true
+    case _ => is_odd(n-1)
+  }
+
+  def is_odd(n: Int) = n match {
+    case 0 => false
+    case _ => is_even(n-1)
+  }
 
 .. class:: incremental
 
@@ -226,7 +258,9 @@ Objects serve two purposes:
 .. class:: incremental
 
 - as a code container (cf. Python modules)
+- in Java, this will be a class with static fields
 - as singletons
+- an object is automatically instantiated exactly once
 
 .. class:: incremental
 
@@ -315,6 +349,7 @@ Scala: Pattern matching
     | [] -> 0
     | head::tail -> head + sum tail;;
   val sum : int list -> int = <fun>
+  #
 
 .. class:: incremental
 
@@ -325,6 +360,8 @@ Scala: Pattern matching
        | case h::tl => h + sum(tl)
        | }
   sum: (List[Int])Int
+
+  scala>
 
 
 Scala: scalacheck
@@ -345,7 +382,8 @@ Scala: scalacheck examples
   import org.scalacheck._
 
   object StringSpecification extends Properties("String") {
-    property("startsWith") = Prop.forAll((a: String, b: String) => (a+b).startsWith(a))
+    property("startsWith") = Prop.forAll((a: String, b: String) =>
+      (a+b).startsWith(a))
     // Is this really always true?
     property("concat") = Prop.forAll((a: String, b: String) => 
       (a+b).length > a.length && (a+b).length > b.length )
@@ -356,8 +394,10 @@ Scala: scalacheck examples
 The port
 --------
 
-The initial port was done over the course of several weeks; the current implementation is a rewrite\ [#]_. The initial implementation had a stack-overflow bug
-that was reëncountered during the rewrite, which I'll discuss in a bit.
+The initial port was done over the course of several weeks; the
+current implementation is a rewrite\ [#]_. The initial implementation
+had a stack-overflow bug that was reëncountered during the rewrite,
+which I'll discuss in a bit.
 
 .. class:: incremental
 
@@ -477,6 +517,15 @@ The port: Macros: run
 
 ::
 
+  > (run #f (q) (member° q '(a b c d e)))
+  (a b c d e)
+  >
+
+The port: Macros: run
+---------------------
+
+::
+
   (define-syntax run
     (syntax-rules ()
       ((_ n^ (x) g ...)
@@ -558,6 +607,7 @@ The port: Macros: project
   7
   42
   (7)
+  >
 
 .. class:: handout
 
@@ -608,6 +658,16 @@ When computing with streams, eagerness is *bad*
   +  def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
   ...
 
+The port: Common pitfalls
+-------------------------
+
+- when translating a Scheme **fresh** or **project** goal, forgetting
+  to apply the created goal to the input substitution
+- higher-order functions: functional parameter must be followed by *_*
+- Variadic functions: if arg array is converted internally to arg list,
+  must convert back to arg array when recurring
+
+
 The port: Benchmarks
 --------------------
 
@@ -636,6 +696,11 @@ The port: Benchmarks
   res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
 
 
+The port: TODO list
+-------------------
+
+- parallelization
+- Prolog benchmarks from the full Kanren
 
 The port: Downloads
 -------------------
@@ -645,3 +710,9 @@ The latest Kanren source is available on Sourceforge\ [#]_.
 
 .. [#] http://github.com/hircus/minikanren-scala
 .. [#] http://kanren.sourceforge.net/
+
+Q&A
+---
+
+Your questions, suggestions, etc. are welcome! The project bug tracker is
+at the GitHub address.
