@@ -49,7 +49,7 @@ object UnifySpecification extends Properties("Unification") {
   property("bindonce") = forAll { n: Int =>
     val v = make_var('v)
     (for {
-      s <- unify(v, n, empty_s)
+      s <- empty_s.unify(v, n)
       res <- s.lookup(v)
     } yield res)  match {
       case Some(x) => x == n
@@ -60,8 +60,8 @@ object UnifySpecification extends Properties("Unification") {
   property("bindtwice") = forAll { (vstr: String, m: Int, n: Int) =>
     val v = make_var(Symbol(vstr))
     (for {
-      s1 <- unify(v, m, empty_s)
-      s2 <- unify(v, n, s1)
+      s1 <- empty_s.unify(v, m)
+      s2 <- s1.unify(v, n)
       res <- s2.lookup(v)
     } yield res) match {
       case Some(_) => m==n
@@ -75,4 +75,9 @@ object UnifySpecification extends Properties("Unification") {
     
     run(-1, v)(pairGoal) == List(m) &&
     run(-1, w)(pairGoal) == List(n) }
+
+  property("=/= #1") = forAll { n:Int =>
+    crun(-1, v)(v =/= n, v === n) == Nil }
+
 }
+

@@ -41,10 +41,35 @@ object MiniKanren {
   type Constraints = List[(Var, List[Any])]
 
   /* Substitution */
-  trait Subst {
+  abstract class Subst {
     def extend(v: Var, x: Any): Option[Subst]
+    def c_extend(v: Var, x: Any): Subst = this
+    def constraints(v: Var): List[Any] = Nil
     def lookup(v: Var): Option[Any]
     def length: Int
+
+    def unify(term1: Any, term2: Any): Option[Subst] = {
+      val t1 = walk(term1, this)
+      val t2 = walk(term2, this)
+
+      if (t1 == t2) return Some(this)
+      else if (t1.isInstanceOf[Var])
+	return this.extend(t1.asInstanceOf[Var], t2)
+      else if (t2.isInstanceOf[Var])
+	return this.extend(t2.asInstanceOf[Var], t1)
+      else if (pairp(t1) && pairp(t2)) {
+	val ls1 = t1.asInstanceOf[(Any,Any)]
+	val ls2 = t2.asInstanceOf[(Any,Any)]
+
+	this.unify(ls1._1, ls2._1) match {
+	  case None => return None
+	  case Some(s2: Subst) =>
+	    return s2.unify(ls1._2, ls2._2)
+	}
+      }
+      else if (t1 == t2) return Some(this)
+      else return None
+    }
   }
 
   import info.hircus.kanren.Substitution._
@@ -154,29 +179,6 @@ object MiniKanren {
  */    
   def reify(v: Any) = walk_*(v, reify_s(v, empty_s))
 
-  def unify(term1: Any, term2: Any, s: Subst): Option[Subst] = {
-    val t1 = walk(term1, s)
-    val t2 = walk(term2, s)
-
-    if (t1 == t2) return Some(s)
-    else if (t1.isInstanceOf[Var])
-      return s.extend(t1.asInstanceOf[Var], t2)
-    else if (t2.isInstanceOf[Var])
-      return s.extend(t2.asInstanceOf[Var], t1)
-    else if (pairp(t1) && pairp(t2)) {
-      val ls1 = t1.asInstanceOf[(Any,Any)]
-      val ls2 = t2.asInstanceOf[(Any,Any)]
-
-      unify(ls1._1, ls2._1, s) match {
-	case None => return None
-	case Some(s2: Subst) =>
-	  return unify(ls1._2, ls2._2, s2)
-      }
-    }
-    else if (t1 == t2) return Some(s)
-    else return None
-  }
-  
   /* Logic system */
 
   /* (define bind
@@ -328,15 +330,30 @@ object MiniKanren {
 
   class Unifiable(a: Any) {
     def ===(b: Any): Goal = mkEqual(a, b)
+    def =/=(b: Any): Goal = neverEqual(a, b)
   }
 
   implicit def unifiable(a: Any) = new Unifiable(a)
 
-  def mkEqual(t1: Any, t2: Any): Goal = { s: Subst =>
-    unify(t1, t2, s) match {
+  def mkEqual(t1: Any, t2: Any): Goal = { s: Subst => {
+    s.unify(t1, t2) match {
       case Some(s2) => succeed(s2)
-      case None => fail(empty_s) // does not matter which substitution
-    } }
+      case None => fail(s) // does not matter which substitution
+    }
+  } }
+
+  def neverEqual(t1: Any, t2: Any): Goal = { s: Subst => {
+    val v1 = walk(t1, s)
+    val v2 = walk(t2, s)
+
+    if (v1 == v2) fail(s)
+    else {
+      val s1 = if (v1.isInstanceOf[Var])  s.c_extend(v1.asInstanceOf[Var], v2) else s
+      val s2 = if (v2.isInstanceOf[Var]) s1.c_extend(v2.asInstanceOf[Var], v1) else s1
+      
+      succeed(s2)
+    }
+  } }
 
   /* (define-syntax run
    *   (syntax-rules ()
