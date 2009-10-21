@@ -4,19 +4,61 @@ import info.hircus.kanren.MiniKanren._
 
 object Substitution {
 
+  /**
+   * An empty simple substitution
+   */
   object EmptySubst extends Subst {
+    /**
+     * Extending an empty substitution always succeeds, producing a simple substitution
+     * with one binding, v -> x
+     *
+     * @param v a logical variable
+     * @param x a value to bind x to
+     */
     def extend(v: Var, x: Any) = Some(SimpleSubst(v,x,this))
+    /**
+     * Looking up in an empty substitution always fails
+     *
+     * @param v a logical variable
+     */
     def lookup(v: Var) = None
+    /**
+     * The length of an empty substitution is zero
+     */
     def length: Int = 0
   }
 
+  /**
+   * A non-empty simple substitution
+   */
   case class SimpleSubst(v: Var, x: Any, s: Subst) extends Subst {
+    /**
+     * Extending a simple substitution always succeeds, producing a new substitution
+     * linked with the current one
+     *
+     * @param v a logical variable
+     * @param x a value to bind to x
+     */
     def extend(v: Var, x: Any) = Some(SimpleSubst(v,x,this))
+    /**
+     * Looking up a variable succeeds immediately if it is at the head of the substitution.
+     * Otherwise, the linked substitution is queried.
+     *
+     * @param v a logical variable
+     */
     def lookup(v: Var) = if (this.v == v) Some(x) else s.lookup(v)
+
+    /**
+     * The length of a non-empty substitution is one more than its linked substitution
+     */
     def length: Int = 1 + s.length
   }
 
   abstract class ConstraintSubst extends Subst {
+    /**
+     * In a constrained substitution, two walked terms are only unifiable if neither are listed in
+     * the other's constraints
+     */
     override def unify(term1: Any, term2: Any): Option[Subst] = {
       val v1 = walk(term1, this)
       val v2 = walk(term2, this)
@@ -41,14 +83,27 @@ object Substitution {
 
 
   case class ConstraintSubst0(c: Constraints) extends Subst {
+    /**
+     * extending a constraint substitution creates a new constraint substitution
+     * with the extension done in the simple substitution part
+     */
     def extend(v: Var, x: Any) =
       if (this.constraints(v) contains x) None
       else Some(ConstraintSubstN(SimpleSubst(v,x,this), c))
 
     override def c_extend(v: Var, x: Any) = ConstraintSubst0(c_insert(v,x,c))
 
+    /**
+     * Looking up a variable in an empty constraint substitution always returns None
+     *
+     * @param v a logical variable
+     * @return None
+     */
     def lookup(v: Var) = None
     override def constraints(v: Var) = c_lookup(v, c)
+    /**
+     * The length of an empty constraint substitution is zero
+     */
     def length: Int = 0
   }
 
@@ -62,9 +117,18 @@ object Substitution {
       else Some(ConstraintSubstN(SimpleSubst(v,x,s), c))
   
     override def c_extend(v: Var, x: Any) = ConstraintSubstN(s, c_insert(v,x,c))
-  
+
+    /**
+     * Looking up a variable in a constraint substitution looks it up in the
+     * simple substitution
+     *
+     * @param v a logical variable
+     */
     def lookup(v: Var) = s.lookup(v)
     override def constraints(v: Var) = c_lookup(v, c)
-    def length: Int = 1 + s.length 
+    /**
+     * The length of a constraing substitution is the length of its simple substitution
+     */
+    def length: Int = s.length 
   }
 }
