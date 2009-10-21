@@ -123,6 +123,25 @@ object Prelude {
                list_o(d))(s) },
 	      fail))
 
+
+  /**
+   * A relation that holds if l3 is unifiable with the append of l1 and l2
+   *
+   * @param l1 a Kanren list
+   * @param l2 a Kanren list
+   * @param l3 a Kanren list
+   */
+  def append_o(l1: Any, l2: Any, l3: Any): Goal =
+    if_i(null_o(l1), l2 === l3,
+	 { s: Subst => {
+	   val x = make_var('x)
+	   val l11 = make_var('l11)
+	   val l31 = make_var('l31)
+
+	   all(l1 === (x, l11),
+	       l3 === (x, l31),
+	       append_o(l11, l2, l31))(s) } })
+
   /**
    * A relation that unifies 'x' with an element from 'l'
    * If x is fresh, collecting all results  yield all the elements of l
