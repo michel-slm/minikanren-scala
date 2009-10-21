@@ -36,18 +36,46 @@ object MiniKanren {
   /* Type definitions */
   import java.util.HashMap
 
-  type Binding = (Var, Any)
-
+  /**
+   * A constraint is a list of pairs, each pair consisting of a logical variable and a list of
+   * variables/values it is not allowed to unify with
+   */
   type Constraints = List[(Var, List[Any])]
 
-  /* Substitution */
+  /**
+   * This abstract class specifies the basic operations any substitution must satisfy.
+   */
   abstract class Subst {
+    /**
+     * Extend a substitution with a new mapping from v -> x. Might fail in some substitution implementations.
+     */
     def extend(v: Var, x: Any): Option[Subst]
+    /**
+     * Add a constraint for the specified variable
+     */
     def c_extend(v: Var, x: Any): Subst = this
+    /**
+     * Given a variable, look up its constraints
+     */
     def constraints(v: Var): List[Any] = Nil
+    /**
+     * Given a variable, look up its bound value
+     */
     def lookup(v: Var): Option[Any]
+    /**
+     * The length of a substitution, i.e. the number of var -> value mappings it contains
+     */
     def length: Int
 
+    /**
+     * Unifies two terms
+     * This default implementation always succeeds; substitution classes with constraints
+     * must override this, but may call this implementation once the unification is verified to be safe
+     *
+     * @param term1 Any value
+     * @param term2 Any value
+     * @return Some substitution
+     */
     def unify(term1: Any, term2: Any): Option[Subst] = {
       val t1 = walk(term1, this)
       val t2 = walk(term2, this)
@@ -74,13 +102,28 @@ object MiniKanren {
 
   import info.hircus.kanren.Substitution._
 
+  /**
+   * A goal is a function that, given a substitution, produces a stream of substitution.
+   * This stream is empty if the goal fails; otherwise, it may contain any number of
+   * substitutions
+   */
   type Goal = (Subst) => Stream[Subst]
   val empty_s  = EmptySubst
   val empty_cs = ConstraintSubst0(Nil)
 
-  /* Logic variables */
+  /**
+   * A logic variable
+   * It consists of two parts: a user-supplied name, and a count that is automatically incremented.
+   * The count makes sure that each created variable is unique.
+   */
   case class Var(name: Symbol, count: Int)
   private val m = new HashMap[Symbol, Int]()
+  /**
+   * Creates a logic variable, with the requested name, and a count that is automatically incremented
+   *
+   * @param name The name of the variable
+   * @return a logic variable
+   */
   def make_var(name: Symbol) = {
     val count = m.get(name)
     m.put(name, count+1)
@@ -88,9 +131,16 @@ object MiniKanren {
   }
 
   /* Monads */
+
+  /**
+   * A goal that always succeeds, returning a stream containing only its input substitution
+   */
   def succeed: Goal = { s: Subst =>
     Stream.cons(s, Stream.empty)
   }
+  /**
+   * A goal that always fails, returning an empty stream of substitution
+   */
   def fail: Goal = { s: Subst => Stream.empty }
 
 
