@@ -32,13 +32,26 @@
 package info.hircus.kanren
 
 object MiniKanren {
+
+  /* Type definitions */
   import java.util.HashMap
 
-  /* Monads */
-  def succeed: Goal = { s: Subst =>
-    Stream.cons(s, Stream.empty)
+  type Binding = (Var, Any)
+
+  type Constraints = List[(Var, List[Any])]
+
+  /* Substitution */
+  trait Subst {
+    def extend(v: Var, x: Any): Option[Subst]
+    def lookup(v: Var): Option[Any]
+    def length: Int
   }
-  def fail: Goal = { s: Subst => Stream.empty }
+
+  import info.hircus.kanren.Substitution._
+
+  type Goal = (Subst) => Stream[Subst]
+  val empty_s  = EmptySubst
+  val empty_cs = ConstraintSubst0(Nil)
 
   /* Logic variables */
   case class Var(name: Symbol, count: Int)
@@ -49,10 +62,13 @@ object MiniKanren {
     Var(name, count)
   }
 
-  type Binding = (Var, Any)
+  /* Monads */
+  def succeed: Goal = { s: Subst =>
+    Stream.cons(s, Stream.empty)
+  }
+  def fail: Goal = { s: Subst => Stream.empty }
 
-  /* Substitution */
-  type Goal = (Subst) => Stream[Subst]
+
   def pairp(x: Any): Boolean =
     x.isInstanceOf[(Any,Any)]
 
@@ -118,7 +134,14 @@ object MiniKanren {
   
   def reify_s(v: Any, s: Subst): Subst= {
     val v1 = walk(v, s)
-    if (v1.isInstanceOf[Var]) s.extend(v1.asInstanceOf[Var], reify_name(s.length))
+    if (v1.isInstanceOf[Var])
+      s.extend(v1.asInstanceOf[Var], reify_name(s.length)) match {
+	case Some(s1) => s1
+	/* never happens as reification does not use any constraints
+	 * but the compiler does not know that
+	 */
+	case _ => s
+      }
     else if (pairp(v1)) {
       val ls = v1.asInstanceOf[(Any,Any)]
       reify_s(ls._2, reify_s(ls._1, s))
@@ -137,9 +160,9 @@ object MiniKanren {
 
     if (t1 == t2) return Some(s)
     else if (t1.isInstanceOf[Var])
-      return Some(s.extend(t1.asInstanceOf[Var], t2))
+      return s.extend(t1.asInstanceOf[Var], t2)
     else if (t2.isInstanceOf[Var])
-      return Some(s.extend(t2.asInstanceOf[Var], t1))
+      return s.extend(t2.asInstanceOf[Var], t1)
     else if (pairp(t1) && pairp(t2)) {
       val ls1 = t1.asInstanceOf[(Any,Any)]
       val ls2 = t2.asInstanceOf[(Any,Any)]
@@ -326,14 +349,22 @@ object MiniKanren {
    *          '())))))
    */
 
-  /* produce at most n results
+  /**
+   * Runs the given goals and produce up to n results for the specified variable
+   *
+   * @param n  max number of results. A negative number specifies that all available results should be returned
+   * @param v  the variable to be inspected
+   * @param g0 a goal; multiple goals might be specified
    */
-  def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = {
+  def run(n: Int, v: Var) = run_aux(n, v, false) _
+  def crun(n: Int, v: Var) = run_aux(n, v, true) _
+ 
+  private def run_aux(n: Int, v: Var, use_constraints: Boolean)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {
       case Nil => g0
       case gls => all((g0::gls): _*)
     }
-    val allres = g(empty_s)  map {s: Subst => reify(walk_*(v, s)) }
+    val allres = g(if (use_constraints) empty_cs else empty_s)  map {s: Subst => reify(walk_*(v, s)) }
     (if (n < 0) allres else (allres take n)) toList
   }
 }
