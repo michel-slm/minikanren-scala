@@ -11,5 +11,6 @@ else
   PUBDIR=$2
 fi
 
-rsync -avz --delete -e ssh api docs/presentation.html docs/ui $HOST:$PUBDIR
+rsync -avz --delete -e ssh api docs/{handouts,presentation}.html docs/ui \
+  $HOST:$PUBDIR
 
