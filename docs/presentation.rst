@@ -399,16 +399,84 @@ current implementation is a rewrite\ [#]_. The initial implementation
 had a stack-overflow bug that was reëncountered during the rewrite,
 which I'll discuss in a bit.
 
-.. class:: incremental
-
-- better test coverage: using scalacheck
-- better use of Scala features
-- less "Scheme"-ish interface. e.g. use **if** instead of **cond**
+The new codebase is better tested, and utilizes more Scala features to
+make the syntax look natural.
 
 .. [#] original code is lost. moral story: backup (and share online...)
 
-mplus (Scheme)
---------------
+The port: Substitution
+----------------------
+
+Several choices for substitution:
+
+.. class:: incremental
+
+- List[(Var, Any)] --> equivalent to ((Var,Any),Subst)
+- linked triples: (Var, Any, Subst)
+- immutable maps
+
+The port: Substitution (cont.)
+------------------------------
+
+Scheme Kanren uses *association lists*, i.e. a linked list of linked lists,
+but that could be partly because that's the only native recursive data structure
+in Scheme.
+
+.. class:: incremental
+
+- consider memory usage
+- in Scala, triples are more than twice faster
+- immutable maps ==> heap OOM
+
+
+The port: Constraints
+---------------------
+
+Kanren does not natively understand numbers, so the most natural
+constraint is inequality. (This is proposed by Prof. Friedman and is
+not part of the official Kanren codebase, probably due to performance
+cost)
+
+This implementation led to the shift in the Scala port from an exact
+translation of Scheme's substitution to a more OOP implementation
+(cf. Haskell typeclass).
+
+The port: Constraints (cont.)
+-----------------------------
+
+.. class:: incremental
+
+- simple substitutions have no-op constraint methods
+- constraint substitutions delegate to the simple substitution methods when
+  possible, and layer constraint checking on top
+
+The port: Constraints: code
+---------------------------
+
+:: 
+
+  case class ConstraintSubstN(s: SimpleSubst,
+                              c: Constraints) extends Subst {
+    def extend(v: Var, x: Any) =
+      if (this.constraints(v) contains x) None
+      else Some(ConstraintSubstN(SimpleSubst(v,x,s), c))
+  
+    override def c_extend(v: Var, x: Any) =
+      ConstraintSubstN(s, c_insert(v,x,c))
+
+The port: Constraints: code
+---------------------------
+
+::
+
+    def lookup(v: Var) = s.lookup(v)
+    override def constraints(v: Var) = c_lookup(v, c)
+    def length: Int = s.length 
+  }
+
+
+Monadic operator: mplus (Scheme)
+--------------------------------
 
 ::
 
@@ -420,8 +488,8 @@ mplus (Scheme)
         ((a f0) (choice a 
                   (lambdaf@ () (mplus (f0) f)))))))
 
-mplus (Scala)
--------------
+Monadic operator: mplus (Scala)
+-------------------------------
 
 ::
 
@@ -429,8 +497,14 @@ mplus (Scala)
             f: => Stream[Subst]): Stream[Subst] =
     a_inf append f
 
-mplus\ :sup:`i` (Scheme)
-------------------------
+.. class:: handout
+
+**mplus** is simply stream append. It is kept as a separate function because,
+as can be seen in the next slide, other variants do not have built-in Scala
+implementations.
+
+Monadic operator: mplus\ :sup:`i` (Scheme)
+------------------------------------------
 
 ::
 
@@ -442,9 +516,10 @@ mplus\ :sup:`i` (Scheme)
         ((a f0) (choice a 
                   (lambdaf@ () (mplusi (f) f0)))))))
 
+**mplus**\ :sup:`i` *interleaves* two streams
 
-mplus\ :sup:`i` (Scala)
------------------------
+Monadic operator: mplus\ :sup:`i` (Scala)
+-----------------------------------------
 
 ::
 
@@ -457,8 +532,9 @@ mplus\ :sup:`i` (Scala)
     }
   }
 
-bind (Scheme)
--------------
+
+Monadic operator: bind (Scheme)
+-------------------------------
 
 ::
 
@@ -470,17 +546,21 @@ bind (Scheme)
         ((a f) (mplus (g a)
                  (lambdaf@ () (bind (f) g)))))))
 
-bind (Scala)
-------------
+Monadic operator: bind (Scala)
+------------------------------
 
 ::
 
   def bind(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
     a_inf flatMap g
 
+.. class:: handout
 
-bind\ :sup:`i` (Scheme)
------------------------
+**bind** is flatMap: it first maps *g* over the stream, and then append the
+resulting streams together.
+
+Monadic operator: bind\ :sup:`i` (Scheme)
+-----------------------------------------
 
 ::
 
@@ -492,8 +572,8 @@ bind\ :sup:`i` (Scheme)
         ((a f) (mplusi (g a)
                  (lambdaf@ () (bindi (f) g)))))))
 
-bind\ :sup:`i` (Scala)
-----------------------
+Monadic operator: bind\ :sup:`i` (Scala)
+----------------------------------------
 
 ::
 
@@ -505,6 +585,35 @@ bind\ :sup:`i` (Scala)
         case _ => mplus_i(g(a), bind(f, g))
       }
     }
+
+Syntax: equality
+----------------
+
+In Scheme, (≡ x y) is the goal that unifies *x* and *y*; (≢ x y)
+constrains them from being unifiable. The syntax looks natural in
+Scheme, as everything is infix.
+
+.. class:: incremental
+
+In Scala, however, the equivalent looks ugly: *mkEqual(x,y)*;
+*neverEqual(x,y)*. We can introduce infix operations by using implicit
+conversions
+
+Syntax: equality
+----------------
+
+::
+
+  class Unifiable(a: Any) {
+    def ===(b: Any): Goal = mkEqual(a, b)
+    def =/=(b: Any): Goal = neverEqual(a, b)
+  }
+
+  implicit def unifiable(a: Any) = new Unifiable(a)
+
+≡ and ≢ are now methods of the class *Unifiable*, and because an
+implicit conversion function is in scope, attempting to call it on any
+value will autobox it to a Unifiable with the same value.
 
 The port: Macros
 ----------------
@@ -555,8 +664,9 @@ The port: Macros: Run
 
   - *v* must be already defined
   - We use the **map** method of a stream, which produces a lazy stream
-  - It's not idiomatic outside Lisp to have functions that take either #f or some other type.
-    Instead, a negative number is used to collect all results
+  - It's not idiomatic outside Lisp to have functions that take either
+    #f or some other type.  Instead, a negative number is used to
+    collect all results
 
 The port: Macros: fresh
 -----------------------
@@ -611,9 +721,11 @@ The port: Macros: project
 
 .. class:: handout
 
-  - within the body of the projection, the logic variable *x* is replaced by its bound value
+  - within the body of the projection, the logic variable *x* is
+    replaced by its bound value
   - cond\ :sup:`e` successively bind *x* to 7 and 42
-  - the second **project** expression fails after printing 42, thus 42 is not in the result list
+  - the second **project** expression fails after printing 42, thus 42
+    is not in the result list
 
 
 The port: Macros: project
