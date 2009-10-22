@@ -162,4 +162,17 @@ object Substitution {
      */
     def length: Int = s.length 
   }
+
+  /**
+   * <p>Uses an immutable map to store the substitution.<br>
+   * If the computation is lookup-heavy, this should be faster.</p>
+   *
+   * <p>Not used by default as memory consumption is heavy -- palprod_o
+   * causes heap OOM exception.</p>
+   */
+  case class MSubst(m: Map[Var, Any]) extends Subst {
+    def extend(v: Var, x: Any) = Some(MSubst(m(v) = x))
+    def lookup(v: Var) = m.get(v)
+    def length = m.size
+  }
 }

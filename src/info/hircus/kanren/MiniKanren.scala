@@ -110,6 +110,7 @@ object MiniKanren {
   type Goal = (Subst) => Stream[Subst]
   val empty_s  = EmptySubst
   val empty_cs = ConstraintSubst0(Nil)
+  val empty_ms = MSubst(Map())
 
   /**
    * A logic variable
@@ -423,15 +424,16 @@ object MiniKanren {
    * @param v  the variable to be inspected
    * @param g0 a goal; multiple goals might be specified
    */
-  def run(n: Int, v: Var) = run_aux(n, v, false) _
-  def crun(n: Int, v: Var) = run_aux(n, v, true) _
+  def run(n: Int, v: Var) = run_aux(n, v, empty_s) _
+  def crun(n: Int, v: Var) = run_aux(n, v, empty_cs) _
+  def mrun(n: Int, v: Var) = run_aux(n, v, empty_ms) _
  
-  private def run_aux(n: Int, v: Var, use_constraints: Boolean)(g0: Goal, gs: Goal*): List[Any] = {
+  private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {
       case Nil => g0
       case gls => all((g0::gls): _*)
     }
-    val allres = g(if (use_constraints) empty_cs else empty_s)  map {s: Subst => reify(walk_*(v, s)) }
+    val allres = g(subst)  map {s: Subst => reify(walk_*(v, s)) }
     (if (n < 0) allres else (allres take n)) toList
   }
 }
