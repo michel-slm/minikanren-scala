@@ -1,5 +1,5 @@
 #!/bin/sh
 pushd ${HOME}/checkouts/upstream/kanren/mini
 #petite mybook.ss
-petite mkprelude.scm
+petite palindrom-fixed.scm
 popd
