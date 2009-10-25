@@ -110,7 +110,6 @@ object MiniKanren {
   type Goal = (Subst) => Stream[Subst]
   val empty_s  = EmptySubst
   val empty_cs = ConstraintSubst0(Nil)
-  val empty_ms = MSubst(Map())
 
   /**
    * A logic variable
@@ -426,7 +425,8 @@ object MiniKanren {
    */
   def run(n: Int, v: Var) = run_aux(n, v, empty_s) _
   def crun(n: Int, v: Var) = run_aux(n, v, empty_cs) _
-  def mrun(n: Int, v: Var) = run_aux(n, v, empty_ms) _
+  def maprun(n: Int, v: Var) = run_aux(n, v, empty_msubst) _
+  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
  
   private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {

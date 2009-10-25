@@ -41,3 +41,57 @@ scala> time(run(1,x)(palprod_o(x)))
 101101
 Elapsed: 44277 ms
 res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List())))))))))))))))
+
+==============================
+With Clojure PersistentHashMap
+==============================
+
+scala> ntimes(3, cljrun(1,x)(palprod_o(x)))
+100001
+101101
+100001
+101101
+100001
+101101
+Elapsed times: List(17955, 15586, 13482)
+Avg: 15674
+
+
+==================
+Petite Chez Scheme
+==================
+
+> (time (run 1 (q) (palprod2 q)))
+100001
+101101
+(time (run 1 ...))
+    315 collections
+    37874 ms elapsed cpu time, including 166 ms collecting
+    39312 ms elapsed real time, including 167 ms collecting
+    1330081488 bytes allocated, including 1325753776 bytes reclaimed
+((1 1 1 0 0 1 1 1 1 1 0 0 0 1))
+> (time (run 1 (q) (palprod2 q)))
+100001
+101101
+(time (run 1 ...))
+    316 collections
+    38074 ms elapsed cpu time, including 163 ms collecting
+    38853 ms elapsed real time, including 176 ms collecting
+    1330082640 bytes allocated, including 1331106472 bytes reclaimed
+((1 1 1 0 0 1 1 1 1 1 0 0 0 1))
+> (time (run 1 (q) (palprod2 q)))
+100001
+101101
+(time (run 1 ...))
+    316 collections
+    37951 ms elapsed cpu time, including 148 ms collecting
+    39207 ms elapsed real time, including 160 ms collecting
+    1330082640 bytes allocated, including 1330638672 bytes reclaimed
+((1 1 1 0 0 1 1 1 1 1 0 0 0 1))
+>
+
+=======
+Summary
+=======
+
+We're now about 3x faster than Scheme Mk! Huzzah!
