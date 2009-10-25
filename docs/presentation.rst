@@ -780,8 +780,8 @@ The port: Common pitfalls
   must convert back to arg array when recurring
 
 
-The port: Benchmarks
---------------------
+The port: Benchmarks: Petite Chez Scheme
+----------------------------------------
 
 ::
 
@@ -796,8 +796,8 @@ The port: Benchmarks
   ((1 1 1 0 0 1 1 1 1 1 0 0 0 1))
 
 
-The port: Benchmarks
---------------------
+The port: Benchmarks: Scala (association list)
+----------------------------------------------
 
 ::
 
@@ -807,12 +807,32 @@ The port: Benchmarks
   Elapsed: 114344 ms
   res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
 
+The port: Benchmarks: Scala (case class)
+----------------------------------------
+
+::
+
+  scala> time(run(1,x)(palprod_o(x)))
+  100001
+  101101
+  Elapsed: 44277 ms
+  res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
+
+
 
 The port: TODO list
 -------------------
 
-- parallelization
+.. class:: incremental
+
+- parallelization: cf. pmap\ [#]_
+- the problem is that we don't want to precompute too many answers, so
+  unlike a list pmap, a stream pmap will have to precompute only a
+  fixed number of elements
 - Prolog benchmarks from the full Kanren
+
+.. [#] Erlang implementation: http://lukego.livejournal.com/6753.html
+
 
 The port: Downloads
 -------------------
