@@ -193,7 +193,7 @@ object Substitution {
     def extend(v: Var, x: Any) = Some(CljSubst(m.assoc(v, x)))
     def lookup(v: Var) = {
       val res = m.entryAt(v)
-      if (res != null) Some(res.value)
+      if (res != null) Some(res.`val`)
       else None
     }
     def length = m.count
