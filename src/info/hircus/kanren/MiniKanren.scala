@@ -42,6 +42,10 @@ object MiniKanren {
    */
   type Constraints = List[(Var, List[Any])]
 
+  case class ImproperTail(v: Var) {
+    override def toString() = ". " + v
+  }
+
   /**
    * This abstract class specifies the basic operations any substitution must satisfy.
    */
@@ -85,7 +89,23 @@ object MiniKanren {
 	return this.extend(t1.asInstanceOf[Var], t2)
       else if (t2.isInstanceOf[Var])
 	return this.extend(t2.asInstanceOf[Var], t1)
-      else if (pairp(t1) && pairp(t2)) {
+      else if (improperp(t1)) {
+	t1.asInstanceOf[List[ImproperTail]].head match {
+	  case ImproperTail(x) => this.unify(x, t2)
+	}
+      } else if (improperp(t2)) {
+	t2.asInstanceOf[List[ImproperTail]].head match {
+	  case ImproperTail(x) => this.unify(x, t1)
+	}
+      } else if (listp(t1) && listp(t2)) {
+	val ls1 = t1.asInstanceOf[List[Any]]
+	val ls2 = t2.asInstanceOf[List[Any]]
+
+	for {
+	  s2 <- this.unify(ls1 head, ls2 head)
+	  s3 <- s2.unify(ls1 tail, ls2 tail)
+	} yield s3
+      } else if (pairp(t1) && pairp(t2)) {
 	val ls1 = t1.asInstanceOf[(Any,Any)]
 	val ls2 = t2.asInstanceOf[(Any,Any)]
 
@@ -143,7 +163,16 @@ object MiniKanren {
    */
   def fail: Goal = { s: Subst => Stream.empty }
 
-
+  def improperp(x: Any): Boolean =
+    x.isInstanceOf[List[Any]] && {
+      val y = x.asInstanceOf[List[Any]]
+      (y.size == 1) && (y.head match {
+	case ImproperTail(_) => true
+	case _ => false
+      })
+    }
+  def listp(x: Any): Boolean =
+    x.isInstanceOf[List[Any]] && !(x.asInstanceOf[List[Any]].isEmpty)
   def pairp(x: Any): Boolean =
     x.isInstanceOf[(Any,Any)]
 
