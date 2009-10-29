@@ -1,5 +1,5 @@
-Porting the Mini-Kanren logic system to Scala
-=============================================
+Logical JVM: Implementing the Mini-Kanren logic system in Scala
+===============================================================
 
 :Author: Michel Alexandre Salim
 
@@ -404,8 +404,8 @@ make the syntax look natural.
 
 .. [#] original code is lost. moral story: backup (and share online...)
 
-The port: Substitution
-----------------------
+Substitution
+------------
 
 Several choices for substitution:
 
@@ -415,8 +415,8 @@ Several choices for substitution:
 - linked triples: (Var, Any, Subst)
 - immutable maps
 
-The port: Substitution (cont.)
-------------------------------
+Substitution (cont.)
+--------------------
 
 Scheme Kanren uses *association lists*, i.e. a linked list of linked lists,
 but that could be partly because that's the only native recursive data structure
@@ -429,8 +429,8 @@ in Scheme.
 - immutable maps ==> heap OOM
 
 
-The port: Constraints
----------------------
+Constraints
+-----------
 
 Kanren does not natively understand numbers, so the most natural
 constraint is inequality. (This is proposed by Prof. Friedman and is
@@ -441,8 +441,8 @@ This implementation led to the shift in the Scala port from an exact
 translation of Scheme's substitution to a more OOP implementation
 (cf. Haskell typeclass).
 
-The port: Constraints (cont.)
------------------------------
+Constraints (cont.)
+-------------------
 
 .. class:: incremental
 
@@ -450,8 +450,8 @@ The port: Constraints (cont.)
 - constraint substitutions delegate to the simple substitution methods when
   possible, and layer constraint checking on top
 
-The port: Constraints: code
----------------------------
+Constraints: code
+-----------------
 
 :: 
 
@@ -464,8 +464,8 @@ The port: Constraints: code
     override def c_extend(v: Var, x: Any) =
       ConstraintSubstN(s, c_insert(v,x,c))
 
-The port: Constraints: code
----------------------------
+Constraints: code
+-----------------
 
 ::
 
@@ -615,13 +615,20 @@ Syntax: equality
 implicit conversion function is in scope, attempting to call it on any
 value will autobox it to a Unifiable with the same value.
 
-The port: Macros
-----------------
+Macros
+------
 
-Most macros in the original code can be completely replaced by functions, apart
-from the ones that introduce new names
+Most macros in the original code can be completely replaced by
+functions, apart from the ones that introduce new names.
 
-The port: Macros: run
+Drawbacks -- the use of macros is equivalent to compiler inlining, in
+that the expansion is computed at compile time, rather than at
+runtime. There is a performance hit that has not been quantified yet;
+more later.
+
+On the other hand, macros are harder to compose -- not first-class values.
+
+Macros: run
 ---------------------
 
 ::
@@ -630,8 +637,15 @@ The port: Macros: run
   (a b c d e)
   >
 
-The port: Macros: run
----------------------
+.. class:: handout
+
+ - first arg is number of desired results (#f == all)
+ - specifying the number of results is a Scheme-ism, in a language with
+   more idiomatic support for lazy sequences, **run** can be composed with
+   **take**
+
+Macros: run
+-----------
 
 ::
 
@@ -646,8 +660,8 @@ The port: Macros: run
 	     ((all g ...) empty-s))
 	   ())))))
 
-The port: Macros: Run
----------------------
+Macros: Run
+-----------
 
 ::
 
@@ -662,14 +676,14 @@ The port: Macros: Run
 
 .. class:: handout
 
-  - *v* must be already defined
+  - not a macro: *v* must be already defined
   - We use the **map** method of a stream, which produces a lazy stream
   - It's not idiomatic outside Lisp to have functions that take either
     #f or some other type.  Instead, a negative number is used to
     collect all results
 
-The port: Macros: fresh
------------------------
+Macros: fresh
+-------------
 
 ::
 
@@ -687,8 +701,8 @@ The port: Macros: fresh
 This differs slightly from the first appearance of *list°*: the (else #u) line is removed,
 as cond\ :sup:`e` fails by default
 
-The port: Macros: fresh
------------------------
+Macros: fresh
+-------------
 
 ::
 
@@ -705,8 +719,8 @@ The port: Macros: fresh
 - each line is required to have strictly 2 goals (thus **succeed** is inserted)
 - the **fresh** goal is replaced by a closure. Note *s* is passed to **both**
 
-The port: Macros: project
--------------------------
+Macros: project
+---------------
 
 ::
 
@@ -728,8 +742,8 @@ The port: Macros: project
     is not in the result list
 
 
-The port: Macros: project
--------------------------
+Macros: project
+---------------
 
 ::
 
@@ -744,8 +758,8 @@ The port: Macros: project
 	    
 
 
-The port: Debugging
--------------------
+Debugging
+---------
 
 .. class:: incremental
 
@@ -753,8 +767,8 @@ The port: Debugging
 - can stress-test individual functions, and narrow down possible culprits
 - stack overflow bug found in a combination of elimination and having comments
 
-The port: Debugging (cont.)
----------------------------
+Debugging (cont.)
+-----------------
 
 When computing with streams, eagerness is *bad*
 
@@ -770,8 +784,8 @@ When computing with streams, eagerness is *bad*
   +  def if_e(testg: Goal, conseqg: Goal, altg: => Goal): Goal = {
   ...
 
-The port: Common pitfalls
--------------------------
+Common pitfalls
+---------------
 
 - when translating a Scheme **fresh** or **project** goal, forgetting
   to apply the created goal to the input substitution
@@ -780,7 +794,7 @@ The port: Common pitfalls
   must convert back to arg array when recurring
 
 
-The port: Benchmarks: Petite Chez Scheme
+Benchmarks: Petite Chez Scheme
 ----------------------------------------
 
 ::
@@ -796,7 +810,7 @@ The port: Benchmarks: Petite Chez Scheme
   ((1 1 1 0 0 1 1 1 1 1 0 0 0 1))
 
 
-The port: Benchmarks: Scala (association list)
+Benchmarks: Scala (association list)
 ----------------------------------------------
 
 ::
@@ -807,7 +821,7 @@ The port: Benchmarks: Scala (association list)
   Elapsed: 114344 ms
   res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
 
-The port: Benchmarks: Scala (case class)
+Benchmarks: Scala (case class)
 ----------------------------------------
 
 ::
@@ -818,10 +832,11 @@ The port: Benchmarks: Scala (case class)
   Elapsed: 44277 ms
   res2: Any = List((1,(1,(1,(0,(0,(1,(1,(1,(1,(1,(0,(0,(0,(1,List()...
 
+Conclusion
+----------
 
-
-The port: TODO list
--------------------
+TODO list
+---------
 
 .. class:: incremental
 
@@ -833,6 +848,15 @@ The port: TODO list
 
 .. [#] Erlang implementation: http://lukego.livejournal.com/6753.html
 
+Clojure
+-------
+
+.. class:: incremental
+
+- MK Scala already uses Clojure's implementation of persistent maps
+- Scala-native implementation scheduled to be available in version 2.8
+- Using Clojure will allow measurement of the performance hit entailed in
+  using functions over macros
 
 The port: Downloads
 -------------------
