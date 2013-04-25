@@ -31,6 +31,9 @@
 
 package info.hircus.kanren
 
+import scala.language.implicitConversions
+import scala.language.postfixOps
+
 object MiniKanren {
 
   /* Type definitions */
@@ -82,18 +85,18 @@ object MiniKanren {
 
       if (t1 == t2) return Some(this)
       else if (t1.isInstanceOf[Var])
-	return this.extend(t1.asInstanceOf[Var], t2)
+        return this.extend(t1.asInstanceOf[Var], t2)
       else if (t2.isInstanceOf[Var])
-	return this.extend(t2.asInstanceOf[Var], t1)
+        return this.extend(t2.asInstanceOf[Var], t1)
       else if (pairp(t1) && pairp(t2)) {
-	val ls1 = t1.asInstanceOf[(Any,Any)]
-	val ls2 = t2.asInstanceOf[(Any,Any)]
+        val ls1 = t1.asInstanceOf[(Any,Any)]
+        val ls2 = t2.asInstanceOf[(Any,Any)]
 
-	this.unify(ls1._1, ls2._1) match {
-	  case None => return None
-	  case Some(s2: Subst) =>
-	    return s2.unify(ls1._2, ls2._2)
-	}
+        this.unify(ls1._1, ls2._1) match {
+          case None => return None
+          case Some(s2: Subst) =>
+            return s2.unify(ls1._2, ls2._2)
+        }
       }
       else if (t1 == t2) return Some(this)
       else return None
@@ -211,11 +214,11 @@ object MiniKanren {
     val v1 = walk(v, s)
     if (v1.isInstanceOf[Var])
       s.extend(v1.asInstanceOf[Var], reify_name(s.length)) match {
-	case Some(s1) => s1
-	/* never happens as reification does not use any constraints
-	 * but the compiler does not know that
-	 */
-	case _ => s
+        case Some(s1) => s1
+        /* never happens as reification does not use any constraints
+         * but the compiler does not know that
+         */
+        case _ => s
       }
     else if (pairp(v1)) {
       val ls = v1.asInstanceOf[(Any,Any)]
@@ -243,12 +246,15 @@ object MiniKanren {
     a_inf flatMap g
 
   def bind_i(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
-    a_inf match {
-      case Stream.empty => a_inf
-      case Stream.cons(a, f) => f match {
-	case Stream.empty => g(a)
-	case _ => mplus_i(g(a), bind(f, g))
-      }
+    if (a_inf.isEmpty) {
+      a_inf
+    } else {
+      val a = a_inf.head
+      val f = a_inf.tail
+      if (f.isEmpty)
+        g(a)
+      else
+        mplus_i(g(a), bind(f, g))
     }
 
   /* (define mplus
@@ -260,7 +266,7 @@ object MiniKanren {
    *                 (lambdaf@ () (mplus (f0) f)))))))
    */
   def mplus(a_inf: Stream[Subst],
-	    f: => Stream[Subst]): Stream[Subst] =
+            f: => Stream[Subst]): Stream[Subst] =
     a_inf append f
 
   /**
@@ -272,15 +278,17 @@ object MiniKanren {
    * @return an interleaved stream of substitutions
    */
   def mplus_i(a_inf: Stream[Subst],
-	    f: => Stream[Subst]): Stream[Subst] = a_inf match {
-    case Stream.empty => f
-    case Stream.cons(a, f0) => f0 match {
-      case Stream.empty => Stream.cons(a, f)
-      case _ => Stream.cons(a, mplus_i(f, f0))
+            f: => Stream[Subst]): Stream[Subst] =
+    if (a_inf.isEmpty) {
+      f
+    } else {
+      val a = a_inf.head
+      val f0 = a_inf.tail
+      if (f0.isEmpty)
+        Stream.cons(a, f)
+      else
+        Stream.cons(a, mplus_i(f, f0))
     }
-
-  }
-
 
   /* (define-syntax anye
     *   (syntax-rules ()
@@ -303,12 +311,12 @@ object MiniKanren {
       case Nil => succeed
       case g :: Nil => g
       case g :: gs2 =>
-	{ s: Subst => bindfn(g(s), all(gs2: _*)) }
+        { s: Subst => bindfn(g(s), all(gs2: _*)) }
     }
   }
 
-  def all   = all_aux(bind) _
-  def all_i = all_aux(bind_i) _
+  def all(gs: Goal*)   = all_aux(bind)(gs: _*)
+  def all_i(gs: Goal*) = all_aux(bind_i)(gs: _*)
 
 
   /**
@@ -338,45 +346,56 @@ object MiniKanren {
   def if_e(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst =>
       mplus(both(testg, conseqg)(s),
-	    altg(s))
+            altg(s))
   }
 
   def if_i(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst =>
       mplus_i(both(testg, conseqg)(s),
-	    altg(s))
+            altg(s))
   }
 
   def if_a(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst => {
       val s_inf = testg(s)
-      s_inf match {
-	case Stream.empty => altg(s)
-	case Stream.cons(s_1, s_inf_1) => s_inf_1 match {
-	  case Stream.empty => conseqg(s_1)
-	  case _ => bind(s_inf, conseqg) } }
-    } }
+      if (s_inf.isEmpty) {
+        altg(s)
+      } else {
+        val s_1 = s_inf.head
+        val inf_1 = s_inf.tail
+        if (inf_1.isEmpty)
+          conseqg(s_1)
+        else
+          bind(s_inf, conseqg)
+      }
+    }
+  }
 
   def if_u(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst => {
-      testg(s) match {
-	case Stream.empty => altg(s)
-	case Stream.cons(s_1, s_inf) => conseqg(s_1) }
-    } }
+      val s_inf = testg(s)
+      if (s_inf.isEmpty) {
+        altg(s)
+      } else {
+        val s_1 = s_inf.head
+        conseqg(s_1)
+      }
+    }
+  }
 
   def cond_aux(ifer: (Goal, =>Goal, =>Goal) => Goal)(gs: (Goal,Goal)*): Goal =
     { gs.toList match {
       case Nil => fail
       case (g0, g1) :: gs2 => gs2 match {
-	case Nil => both(g0, g1)
-	case _ => ifer(g0, g1,
-		       cond_aux(ifer)(gs2: _*))
+        case Nil => both(g0, g1)
+        case _ => ifer(g0, g1,
+                       cond_aux(ifer)(gs2: _*))
       } } }
 
-  def cond_e = cond_aux(if_e _) _
-  def cond_i = cond_aux(if_i _) _
-  def cond_a = cond_aux(if_a _) _
-  def cond_u = cond_aux(if_u _) _
+  def cond_e(gs: (Goal,Goal)*) = cond_aux(if_e _)(gs: _*)
+  def cond_i(gs: (Goal,Goal)*) = cond_aux(if_i _)(gs: _*)
+  def cond_a(gs: (Goal,Goal)*) = cond_aux(if_a _)(gs: _*)
+  def cond_u(gs: (Goal,Goal)*) = cond_aux(if_u _)(gs: _*)
 
   class Unifiable(a: Any) {
     def ===(b: Any): Goal = mkEqual(a, b)
@@ -423,10 +442,10 @@ object MiniKanren {
    * @param v  the variable to be inspected
    * @param g0 a goal; multiple goals might be specified
    */
-  def run(n: Int, v: Var) = run_aux(n, v, empty_s) _
-  def crun(n: Int, v: Var) = run_aux(n, v, empty_cs) _
-  def maprun(n: Int, v: Var) = run_aux(n, v, empty_msubst) _
-  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
+  def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_s)(g0, gs: _*)
+  def crun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_cs)(g0, gs: _*)
+  def maprun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_msubst)(g0, gs: _*)
+  def cljrun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_cljsubst)(g0, gs: _*)
  
   private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {

@@ -43,7 +43,7 @@ object UnifySpecification extends Properties("Unification") {
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {
     if (s.isEmpty) s
-    else s.head :: remove_right_dups(s.tail.remove({_ == s.head}))
+    else s.head :: remove_right_dups(s.tail.filterNot({_ == s.head}))
   }
 
   property("bindonce") = forAll { n: Int =>

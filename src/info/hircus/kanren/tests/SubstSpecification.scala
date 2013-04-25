@@ -31,6 +31,8 @@
 
 package info.hircus.kanren.tests
 
+import scala.language.postfixOps
+
 import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
 
@@ -40,7 +42,7 @@ object SubstSpecification extends Properties("Substitution") {
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {
     if (s.isEmpty) s
-    else s.head :: remove_right_dups(s.tail.remove({_ == s.head}))
+    else s.head :: remove_right_dups(s.tail.filterNot({_ == s.head}))
   }
 
   property("freshvar") = forAll { (vstr: String) =>
@@ -62,7 +64,7 @@ object SubstSpecification extends Properties("Substitution") {
     val unique_vars = remove_right_dups(vars)
     
     ( (s  == reify_s(pvars._2,
-			   reify_s(pvars._1, empty_s))) &&
+                           reify_s(pvars._1, empty_s))) &&
      unique_vars.length == s.length &&
      pair2list(walk_*(list2pair(unique_vars), s)) ==
        ((0 until s.length) map { reify_name(_) } toList) )

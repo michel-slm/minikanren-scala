@@ -108,8 +108,8 @@ object Substitution {
   private def c_insert(v: Var, x: Any, c: Constraints): Constraints = c match {
     case Nil => List((v, List(x)))
     case (w, cls) :: c2 => if (v==w) ((w, if (cls contains x) cls
-					  else x::cls) :: c2)
-			   else (w,cls) :: c_insert(v,x,c2)
+                                          else x::cls) :: c2)
+                           else (w,cls) :: c_insert(v,x,c2)
   }
 
 
@@ -171,7 +171,7 @@ object Substitution {
    * causes heap OOM exception.</p>
    */
   case class MSubst(m: Map[Var, Any]) extends Subst {
-    def extend(v: Var, x: Any) = Some(MSubst(m(v) = x))
+    def extend(v: Var, x: Any) = Some(MSubst(m + (v -> x)))
     def lookup(v: Var) = m.get(v)
     def length = m.size
   }

@@ -31,6 +31,8 @@
 
 package info.hircus.kanren.tests
 
+import scala.language.postfixOps
+
 import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
 import info.hircus.kanren.Prelude._
@@ -54,15 +56,15 @@ object BranchingSpecification extends Properties("Branching") {
     
   property("cond_i #1") =
     run(5, v)(both(if_i(false === v, always_o,
-			if_i(true === v, always_o,
-			     fail)),
-		   true === v)) == ( (for { x <- 0 until 5 } yield true) toList )
+                        if_i(true === v, always_o,
+                             fail)),
+                   true === v)) == ( (for { x <- 0 until 5 } yield true) toList )
 
   property("cond_i #2") =
     run(5, v)(both(all_i(if_e(false === v, succeed,
-			      true === v),
-			 always_o),
-		   true === v)) == (
-		     (for { x <- 0 until 5 } yield true) toList )
+                              true === v),
+                         always_o),
+                   true === v)) == (
+                     (for { x <- 0 until 5 } yield true) toList )
 
 }

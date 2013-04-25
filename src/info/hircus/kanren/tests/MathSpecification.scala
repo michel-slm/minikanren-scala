@@ -31,6 +31,8 @@
 
 package info.hircus.kanren.tests
 
+import scala.language.postfixOps
+
 import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
 import info.hircus.kanren.MKMath._
@@ -86,8 +88,8 @@ object MathSpecification extends Properties("Math") {
       val x = (Math.exp(n) toInt)
       val y = (Math.exp(m) toInt)
       (floor_log2(x) < floor_log2(y) ==
-	(run(-1, s)(lt_len_o(build_num(x),
-			     build_num(y))) != Nil) ) }
+        (run(-1, s)(lt_len_o(build_num(x),
+                             build_num(y))) != Nil) ) }
   } }
 
   property("<o") = forAll(pairGen(MIN_INT, MAX_INT)) { p => p match {

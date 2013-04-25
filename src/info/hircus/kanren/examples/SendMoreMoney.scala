@@ -31,6 +31,8 @@
 
 package info.hircus.kanren.examples
 
+import scala.language.postfixOps
+
 /**
  * The send-more-money puzzle<br>
  * from upstream's send-more-money.scm<br>
@@ -49,16 +51,16 @@ object SendMoreMoney {
 
   private def common_prefix_o(l: Any, l1: Any, l2: Any): Goal = {
     if_i(null_o(l), succeed,
-	 { s: Subst => {
-	   val x   = make_var('x)
-	   val ls  = make_var('ls)
-	   val l1s = make_var('l1s)
-	   val l2s = make_var('l2s)
+         { s: Subst => {
+           val x   = make_var('x)
+           val ls  = make_var('ls)
+           val l1s = make_var('l1s)
+           val l2s = make_var('l2s)
 
-	   all(l  === (x, ls),
-	       l1 === (x, l1s),
-	       l2 === (x, l2s),
-	       common_prefix_o(ls, l1s, l2s))(s) } })
+           all(l  === (x, ls),
+               l1 === (x, l1s),
+               l2 === (x, l2s),
+               common_prefix_o(ls, l1s, l2s))(s) } })
   }
 
   def reme(x: Any, l: Any, lo: Any): Goal = {
@@ -66,8 +68,8 @@ object SendMoreMoney {
     val l2 = make_var('l2)
 
     all_i(common_prefix_o(l1, l, lo),
-	  append_o(l1, (x,l2), l),
-	  append_o(l1, l2, lo))
+          append_o(l1, (x,l2), l),
+          append_o(l1, l2, lo))
   }
 
 
@@ -77,33 +79,33 @@ object SendMoreMoney {
 
     def make_number(digits: Any, n: Any) = {
       def loop(digits: Any, acc: Any): Goal = {
-	if_i(digits === Nil, n === acc,
-	     { s: Subst => {
-	       val d = make_var('d)
-	       val rest = make_var('rest)
-	       val acc1 = make_var('acc1)
-	       val acc2 = make_var('acc2)
+        if_i(digits === Nil, n === acc,
+             { s: Subst => {
+               val d = make_var('d)
+               val rest = make_var('rest)
+               val acc1 = make_var('acc1)
+               val acc2 = make_var('acc2)
 
-	       all_i(digits === (d, rest),
-		     mul_o(acc, ten, acc1),
-		     add_o(acc1, d, acc2),
-		     loop(rest, acc2))(s) } } )
+               all_i(digits === (d, rest),
+                     mul_o(acc, ten, acc1),
+                     add_o(acc1, d, acc2),
+                     loop(rest, acc2))(s) } } )
       }
       loop(digits, Nil)
     }
 
     def choose_digits(digits: Any,
-		      all_digits: Any,
-		      remained_digits: Any): Goal = {
+                      all_digits: Any,
+                      remained_digits: Any): Goal = {
       if_i(digits === Nil, all_digits === remained_digits,
-	   { s: Subst => {
-	     val d = make_var('d)
-	     val rest = make_var('rest)
-	     val set1 = make_var('set1)
-	     
-	     all_i(digits === (d, rest),
-		   reme(d, all_digits, set1),
-		   choose_digits(rest, set1, remained_digits))(s) } })
+           { s: Subst => {
+             val d = make_var('d)
+             val rest = make_var('rest)
+             val set1 = make_var('set1)
+             
+             all_i(digits === (d, rest),
+                   reme(d, all_digits, set1),
+                   choose_digits(rest, set1, remained_digits))(s) } })
     }
 
     /**
@@ -115,12 +117,12 @@ object SendMoreMoney {
       val dr  = make_var('dr)
 
       all(if_e(ci === Nil, succeed,
-	       ci === (1,Nil)),
-	  add_o(ci, d1, d11),
-	  add_o(d11, d2, dr),
-	  if_e(dr === d_o, co === Nil,
-	       if_e(add_o(d_o, ten, dr), co === (1,Nil),
-		    fail)))
+               ci === (1,Nil)),
+          add_o(ci, d1, d11),
+          add_o(d11, d2, dr),
+          if_e(dr === d_o, co === Nil,
+               if_e(add_o(d_o, ten, dr), co === (1,Nil),
+                    fail)))
     }
 
     val s = make_var('s)
@@ -142,26 +144,26 @@ object SendMoreMoney {
     val rd3 = make_var('rd3)
 
     all_i(choose_digits((m,(s,(o,Nil))), all_digits, rd1),
-	  pos_o(s),
-	  pos_o(m),
-	  add_carry(c3,  s,m,o,m),
-	  choose_digits((e,(n,Nil)), rd1, rd2),
-	  add_carry(c2,  e,o,n,c3),
-	  choose_digits((r,(d,(y,Nil))), rd2, rd3),
-	  add_carry(Nil, d,e,y,c1),
-	  add_carry(c1,  n,r,e,c2),
-	  // verify
-	  make_number((s,(e,(n,(d,Nil)))), send),
-	  make_number((m,(o,(r,(e,Nil)))), more),
-	  make_number((m,(o,(n,(e,(y,Nil))))), money),
-	  add_o(send, more, money),
+          pos_o(s),
+          pos_o(m),
+          add_carry(c3,  s,m,o,m),
+          choose_digits((e,(n,Nil)), rd1, rd2),
+          add_carry(c2,  e,o,n,c3),
+          choose_digits((r,(d,(y,Nil))), rd2, rd3),
+          add_carry(Nil, d,e,y,c1),
+          add_carry(c1,  n,r,e,c2),
+          // verify
+          make_number((s,(e,(n,(d,Nil)))), send),
+          make_number((m,(o,(r,(e,Nil)))), more),
+          make_number((m,(o,(n,(e,(y,Nil))))), money),
+          add_o(send, more, money),
 
-	  { s: Subst => {
-	    val the_send  = walk_*(send, s)
-	    val the_more  = walk_*(more, s)
-	    val the_money = walk_*(money, s)
+          { s: Subst => {
+            val the_send  = walk_*(send, s)
+            val the_more  = walk_*(more, s)
+            val the_money = walk_*(money, s)
 
-	    (q === (List(the_send, the_more, the_money) map read_num))(s) } }
-	)
+            (q === (List(the_send, the_more, the_money) map read_num))(s) } }
+        )
   }
 }
