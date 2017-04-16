@@ -171,33 +171,47 @@ object Substitution {
    * causes heap OOM exception.</p>
    */
   case class MSubst(m: Map[Var, Any]) extends Subst {
-    def extend(v: Var, x: Any) = Some(MSubst(m(v) = x))
+    def extend(v: Var, x: Any) = Some(MSubst(m + (v -> x)))
     def lookup(v: Var) = m.get(v)
     def length = m.size
   }
 
   val empty_msubst = MSubst(Map())
 
-  import clojure.lang.IPersistentMap
-  import clojure.lang.PersistentHashMap
+//  import clojure.lang.IPersistentMap
+//  import clojure.lang.PersistentHashMap
+//
+//  /**
+//   * A substitution based on Clojure's PersistentHashMap
+//   * (earlier based on Odersky's colleague's work at EPFL!)
+//   *
+//   * Requires a modified Clojure, because right now the
+//   * MapEntry interface exposes a val() getter which clashes
+//   * with the Scala keyword
+//   */
+//  case class CljSubst(m: IPersistentMap) extends Subst {
+//    def extend(v: Var, x: Any) = Some(CljSubst(m.assoc(v, x)))
+//    def lookup(v: Var) = {
+//      val res = m.entryAt(v)
+//      if (res != null) Some(res.`val`)
+//      else None
+//    }
+//    def length = m.count
+//  }
+//
+//  val empty_cljsubst = CljSubst(PersistentHashMap.EMPTY)
+  import scala.collection.immutable.Map
 
   /**
-   * A substitution based on Clojure's PersistentHashMap
-   * (earlier based on Odersky's colleague's work at EPFL!)
-   *
-   * Requires a modified Clojure, because right now the
-   * MapEntry interface exposes a val() getter which clashes
-   * with the Scala keyword
-   */
-  case class CljSubst(m: IPersistentMap) extends Subst {
-    def extend(v: Var, x: Any) = Some(CljSubst(m.assoc(v, x)))
+    * A substitution based on Scala's immutable hashmap (which now looks like Clojure's PersistentHashMap)
+    */
+  case class CljSubst(m: Map[Any, Any]) extends Subst {
     def lookup(v: Var) = {
-      val res = m.entryAt(v)
-      if (res != null) Some(res.`val`)
-      else None
+      m.get(v)
     }
-    def length = m.count
+    def extend(v: Var, x: Any) = Some(CljSubst(m + (v -> x)))
+    def length = m.size
   }
 
-  val empty_cljsubst = CljSubst(PersistentHashMap.EMPTY)
+  val empty_cljsubst = CljSubst(Map())
 }

@@ -1,5 +1,0 @@
-#!/bin/sh
-pushd ${HOME}/checkouts/upstream/kanren/mini
-#petite mybook.ss
-petite palindrom-fixed.scm
-popd

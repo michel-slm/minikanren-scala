@@ -1,0 +1,34 @@
+# See http://about.travis-ci.org/docs/user/build-configuration/
+# use Docker-based container (instead of OpenVZ)
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.sbt
+    - $HOME/.ivy2
+
+before_cache:
+  # Cleanup the cached directories to avoid unnecessary cache updates
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.sbt        -name "*.lock"               -print -delete
+
+language: scala
+jdk:
+  - oraclejdk8
+scala:
+  - 2.10.6
+  - 2.11.8
+  - 2.12.1
+notifications:
+  email: false
+#  webhooks:
+#    urls:
+#    on_success: always  # options: [always|never|change] default: always
+#    on_failure: always  # options: [always|never|change] default: always
+#    on_start: false     # default: false
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test miniKanrenJVM/tut coverageReport &&
+    sbt coverageAggregate
+after_success:
+  - sbt coveralls

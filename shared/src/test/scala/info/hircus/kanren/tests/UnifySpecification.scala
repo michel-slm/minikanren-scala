@@ -34,38 +34,53 @@ package info.hircus.kanren.tests
 import org.scalacheck._
 import info.hircus.kanren.MiniKanren._
 
-object SubstSpecification extends Properties("Substitution") {
+object UnifySpecification extends Properties("Unification") {
   import Prop.forAll
-  
+
+  val v = make_var('v)
+  val w = make_var('w)
+
   /* Utility function */
   def remove_right_dups[A](s: List[A]): List[A] = {
     if (s.isEmpty) s
-    else s.head :: remove_right_dups(s.tail.remove({_ == s.head}))
+    else s.head :: remove_right_dups(s.tail.filterNot({_ == s.head}))
   }
 
-  property("freshvar") = forAll { (vstr: String) =>
+  property("bindonce") = forAll { n: Int =>
+    val v = make_var('v)
+    (for {
+      s <- empty_s.unify(v, n)
+      res <- s.lookup(v)
+    } yield res)  match {
+      case Some(x) => x == n
+      case None => false
+    }
+  }
+  
+  property("bindtwice") = forAll { (vstr: String, m: Int, n: Int) =>
     val v = make_var(Symbol(vstr))
-    walk_*(v,reify_s(v, empty_s)) == Symbol("_.0")
+    (for {
+      s1 <- empty_s.unify(v, m)
+      s2 <- s1.unify(v, n)
+      res <- s2.lookup(v)
+    } yield res) match {
+      case Some(_) => m==n
+      case None => true
+    }
   }
-  
-  /* for a list containing at least one variable, the reified substitution
-   * contains as many bindings as there are unique variables
-   */
-  property("freshvarls") = forAll { (n: Int, ls: List[Int]) =>
-    import info.hircus.kanren.Prelude._
 
-    val vars = (n::ls) map { n: Int => make_var(Symbol(n.toString)) }
-    val pvars = list2pair(vars).asInstanceOf[(Any,Any)]
+  property("pairs") = forAll { (m:Int, n: Int) =>
+    def pairGoal: Goal =
+      (v, w) === (m, n)
+    
+    run(-1, v)(pairGoal) == List(m) &&
+    run(-1, w)(pairGoal) == List(n) }
 
-    val s = reify_s(pvars, empty_s)
-    
-    val unique_vars = remove_right_dups(vars)
-    
-    ( (s  == reify_s(pvars._2,
-			   reify_s(pvars._1, empty_s))) &&
-     unique_vars.length == s.length &&
-     pair2list(walk_*(list2pair(unique_vars), s)) ==
-       ((0 until s.length) map { reify_name(_) } toList) )
-  }
-  
+  property("=/= #1") = forAll { n:Int =>
+    crun(-1, v)(v =/= n, v === n) == Nil }
+
+  property("=/= #2") = forAll { n:Int =>
+    crun(-1, v)(v =/= n, w === n, v === w) == Nil }
+
 }
+
