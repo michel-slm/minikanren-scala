@@ -28,7 +28,7 @@ notifications:
 #    on_failure: always  # options: [always|never|change] default: always
 #    on_start: false     # default: false
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport &&
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test miniKanrenJVM/tut coverageReport &&
     sbt coverageAggregate
 after_success:
   - sbt coveralls

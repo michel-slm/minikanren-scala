@@ -200,4 +200,18 @@ object Substitution {
 //  }
 //
 //  val empty_cljsubst = CljSubst(PersistentHashMap.EMPTY)
+  import scala.collection.immutable.Map
+
+  /**
+    * A substitution based on Scala's immutable hashmap (which now looks like Clojure's PersistentHashMap)
+    */
+  case class CljSubst(m: Map[Any, Any]) extends Subst {
+    def lookup(v: Var) = {
+      m.get(v)
+    }
+    def extend(v: Var, x: Any) = Some(CljSubst(m + (v -> x)))
+    def length = m.size
+  }
+
+  val empty_cljsubst = CljSubst(Map())
 }

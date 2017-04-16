@@ -426,7 +426,7 @@ object MiniKanren {
   def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_s)(g0, gs: _*)
   def crun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_cs)(g0, gs: _*)
   def maprun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_msubst)(g0, gs: _*)
-//  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
+  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
  
   private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {
