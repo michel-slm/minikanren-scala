@@ -11,3 +11,5 @@ bin
 .idea
 /project/project/target/
 /project/target/
+/js/
+/jvm/

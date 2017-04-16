@@ -20,7 +20,9 @@ lazy val miniKanren = crossProject.in(file(".")).
     version := "0.1-SNAPSHOT",
     libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
   ).jvmSettings(
+    coverageEnabled := true
   ).jsSettings(
+    coverageEnabled := false
   )
 
 lazy val miniKanrenJVM = miniKanren.jvm
