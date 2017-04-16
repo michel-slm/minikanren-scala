@@ -106,7 +106,6 @@ object MKMath {
    * @return a Kanren number
    */
   def build_num(n: Int): Any = {
-		//aborg0: maybe changing n == 0 to n <= 0 might avoid avoid problems with negative numbers (on JVM)?
     if (n==0) Nil
     else ( (n%2), build_num(n >> 1) )
   }

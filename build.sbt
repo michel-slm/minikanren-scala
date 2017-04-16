@@ -18,7 +18,26 @@ lazy val miniKanren = crossProject.in(file(".")).
   settings(
     name := "Scala MiniKanren",
     version := "0.1-SNAPSHOT",
-    libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test"
+    libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.13.4" % "test",
+
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-encoding", "UTF-8",
+      "-unchecked",
+      "-feature",
+      //"-language:implicitConversions",
+      //"-language:postfixOps",
+      //"-language:higherKinds",
+      //"-language:reflectiveCalls",
+      "-Xlint",
+      //  "-Xfatal-warnings",
+      //"-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-value-discard",
+      "-Xfuture"
+    )
+
   ).jvmSettings(
     coverageEnabled := true
   ).jsSettings(
@@ -30,3 +49,10 @@ lazy val miniKanrenJVM = miniKanren.jvm
 lazy val miniKanrenJS = miniKanren.js
 
 tutSettings
+
+LaikaPlugin.defaults
+
+inConfig(LaikaKeys.Laika)(Seq(
+//  sourceDirectories := Seq(baseDirectory.value / "docs"),
+  LaikaKeys.encoding := "UTF-8"
+))
