@@ -244,9 +244,9 @@ object MiniKanren {
 
   def bind_i(a_inf: Stream[Subst], g: Goal): Stream[Subst] =
     a_inf match {
-      case Stream.empty => a_inf
+      case Stream.Empty => a_inf
       case Stream.cons(a, f) => f match {
-	case Stream.empty => g(a)
+	case Stream.Empty => g(a)
 	case _ => mplus_i(g(a), bind(f, g))
       }
     }
@@ -273,9 +273,9 @@ object MiniKanren {
    */
   def mplus_i(a_inf: Stream[Subst],
 	    f: => Stream[Subst]): Stream[Subst] = a_inf match {
-    case Stream.empty => f
+    case Stream.Empty => f
     case Stream.cons(a, f0) => f0 match {
-      case Stream.empty => Stream.cons(a, f)
+      case Stream.Empty => Stream.cons(a, f)
       case _ => Stream.cons(a, mplus_i(f, f0))
     }
 
@@ -307,8 +307,8 @@ object MiniKanren {
     }
   }
 
-  def all   = all_aux(bind) _
-  def all_i = all_aux(bind_i) _
+  def all(gs: Goal*)   = all_aux(bind)(gs: _*)
+  def all_i(gs: Goal*) = all_aux(bind_i)(gs: _*)
 
 
   /**
@@ -351,16 +351,16 @@ object MiniKanren {
     s: Subst => {
       val s_inf = testg(s)
       s_inf match {
-	case Stream.empty => altg(s)
+	case Stream.Empty => altg(s)
 	case Stream.cons(s_1, s_inf_1) => s_inf_1 match {
-	  case Stream.empty => conseqg(s_1)
+	  case Stream.Empty => conseqg(s_1)
 	  case _ => bind(s_inf, conseqg) } }
     } }
 
   def if_u(testg: Goal, conseqg: =>Goal, altg: =>Goal): Goal = {
     s: Subst => {
       testg(s) match {
-	case Stream.empty => altg(s)
+	case Stream.Empty => altg(s)
 	case Stream.cons(s_1, s_inf) => conseqg(s_1) }
     } }
 
@@ -373,10 +373,10 @@ object MiniKanren {
 		       cond_aux(ifer)(gs2: _*))
       } } }
 
-  def cond_e = cond_aux(if_e _) _
-  def cond_i = cond_aux(if_i _) _
-  def cond_a = cond_aux(if_a _) _
-  def cond_u = cond_aux(if_u _) _
+  def cond_e(gs: (Goal, Goal)*) = cond_aux(if_e _)(gs: _*)
+  def cond_i(gs: (Goal, Goal)*) = cond_aux(if_i _)(gs: _*)
+  def cond_a(gs: (Goal, Goal)*) = cond_aux(if_a _)(gs: _*)
+  def cond_u(gs: (Goal, Goal)*) = cond_aux(if_u _)(gs: _*)
 
   class Unifiable(a: Any) {
     def ===(b: Any): Goal = mkEqual(a, b)
@@ -423,10 +423,10 @@ object MiniKanren {
    * @param v  the variable to be inspected
    * @param g0 a goal; multiple goals might be specified
    */
-  def run(n: Int, v: Var) = run_aux(n, v, empty_s) _
-  def crun(n: Int, v: Var) = run_aux(n, v, empty_cs) _
-  def maprun(n: Int, v: Var) = run_aux(n, v, empty_msubst) _
-  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
+  def run(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_s)(g0, gs: _*)
+  def crun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_cs)(g0, gs: _*)
+  def maprun(n: Int, v: Var)(g0: Goal, gs: Goal*) = run_aux(n, v, empty_msubst)(g0, gs: _*)
+//  def cljrun(n: Int, v: Var) = run_aux(n, v, empty_cljsubst) _
  
   private def run_aux(n: Int, v: Var, subst: Subst)(g0: Goal, gs: Goal*): List[Any] = {
     val g = gs.toList match {
